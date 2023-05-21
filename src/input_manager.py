@@ -2,7 +2,7 @@
 Файл с классом InputManager. InputManager отвечает за обработку входных файлов.
 """
 import pandas as pd
-
+import datetime
 
 class InputManager:
 
@@ -44,7 +44,38 @@ class InputManager:
 
         return mutex
     
+
+    def long_partition(self, timeline, max_time_seconds=175):
+        """
+        Capacity in MBs
+        """
+        # imaging_speed = 4 * 128  # Mb / s
+
+        # taking mean
+        # max_imaging_time_seconds = 234 # capacity / imaging_speed
+
+        new_timeline = {}
+        for satellite in timeline.keys():
+            new_intervals = []
+            for interval in timeline[satellite]:
+                duration = (interval[1] - interval[0]).seconds
+                if duration > max_time_seconds:
+                    partitions = int(duration // max_time_seconds)
+                    l = interval[0]
+                    for _ in range(partitions - 1):
+                        new_intervals.append([l, l + datetime.timedelta(seconds=max_time_seconds)])
+                        l += datetime.timedelta(seconds=max_time_seconds)
+                    new_intervals.append([l, interval[1]])
+                else:
+                    new_intervals.append([interval[0], interval[1]])
+                    
+            new_timeline[satellite] = new_intervals
+        
+        return new_timeline
+
+
     
+
     def timeline_partition_overlapping(self, list_dfs, list_satellite_names, start_name='start_datetime', end_name='end_datetime'):
         """
         Example of timeline input
@@ -82,3 +113,26 @@ class InputManager:
                         is_opened[el[1]] = False
         
         return new_table
+    
+
+if __name__ == "__main__":
+    import time
+    import pprint
+
+    manager = InputManager()
+    t1 = datetime.datetime.now()
+    time.sleep(5)
+    t2 = datetime.datetime.now()
+
+    t3 = datetime.datetime.now()
+    time.sleep(1)
+    t4 = datetime.datetime.now()
+
+    dictionary = {'1': [[t1, t2], [t3, t4]]}
+
+    pprint.pprint(dictionary)
+    print()
+
+    a = manager.capacity_partition(timeline=dictionary, capacity=4 * 128)
+
+    pprint.pprint(a)

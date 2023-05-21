@@ -21,7 +21,7 @@ class DataLoader:
         """
         sat_group_id = sat_name[-4:-2]
         file_name = f'AreaTarget-Russia-To-Satellite-KinoSat_{sat_group_id}_plane.txt'
-        path = os.path.join(os.getcwd(), 'data', 'Russia2Constellation', file_name)
+        path = os.path.join(os.path.dirname(os.getcwd()), 'data', 'Russia2Constellation', file_name)
         with open(path) as f:
             data = f.read()
         pure_data_starter = data.find(f'Russia-To-{sat_name}\n')
