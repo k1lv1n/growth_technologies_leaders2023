@@ -28,7 +28,7 @@ class InputManager:
         pass
 
     
-    def __generate_mutex(self, new_table):
+    def generate_mutex(self, new_table):
         res = []
         for k in new_table.keys():
             for v in new_table[k]:
@@ -45,7 +45,7 @@ class InputManager:
         return mutex
     
     
-    def __timeline_partition_overlapping(self, timeline):
+    def timeline_partition_overlapping(self, list_dfs, list_satellite_names, start_name='start_datetime', end_name='end_datetime'):
         """
         Example of timeline input
         [
@@ -55,10 +55,15 @@ class InputManager:
                                 ....
         ]
         """
+        timeline = []
+        for df, satellite_name in zip(list_dfs, list_satellite_names):
+            for _, el in df.iterrows():
+                timeline.append((el[start_name], satellite_name))
+                timeline.append((el[end_name], satellite_name))
         new_table = {}
         is_opened = {}
 
-        for el in timeline:
+        for el in sorted(timeline):
             if el[1] not in new_table.keys():
                 new_table[el[1]] = [[el[0], None]]
                 is_opened[el[1]] = True

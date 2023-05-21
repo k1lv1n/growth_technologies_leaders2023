@@ -1,7 +1,7 @@
 from typing import List
 
 from data.sat_block_to_df import sat_block_to_df
-
+import os
 
 class DataLoader:
     def __init__(self):
@@ -11,9 +11,18 @@ class DataLoader:
         res = []
 
     def get_data_for_sat_russia(self, sat_name):
+        """
+        This function retrieves data for a specific satellite in Russia from a text file and returns it as a
+        pandas dataframe.
+        
+        :param sat_name: The name of the satellite for which data is being requested
+        :return: a pandas DataFrame containing data for a specific satellite in the Russia2Constellation
+        project.
+        """
         sat_group_id = sat_name[-4:-2]
         file_name = f'AreaTarget-Russia-To-Satellite-KinoSat_{sat_group_id}_plane.txt'
-        with open(f'data/Russia2Constellation/{file_name}') as f:
+        path = os.path.join(os.getcwd(), 'data', 'Russia2Constellation', file_name)
+        with open(path) as f:
             data = f.read()
         pure_data_starter = data.find(f'Russia-To-{sat_name}\n')
         res = sat_block_to_df(data[pure_data_starter:])
@@ -21,7 +30,8 @@ class DataLoader:
 
     def get_data_for_sat_station(self, sat_name, station_name):
         file_name = f'Facility-{station_name}.txt'
-        with open(f'data/Facility2Constellation/{file_name}') as f:
+        path = os.path.join(os.getcwd(), 'data', 'Facility2Constellation', file_name)
+        with open(path) as f:
             data = f.read()
         pure_data_starter = data.find(f'{station_name}-To-{sat_name}\n')
         res = sat_block_to_df(data[pure_data_starter:])
