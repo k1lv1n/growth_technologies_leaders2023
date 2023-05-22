@@ -1,8 +1,15 @@
 """
 Файл с классом InputManager. InputManager отвечает за обработку входных файлов.
 """
+from math import ceil
+from typing import List
+
+import numpy as np
 import pandas as pd
 import datetime
+
+from src.data_loader import DataLoader
+
 
 class InputManager:
 
@@ -27,112 +34,156 @@ class InputManager:
     def prepare_data(self):
         pass
 
-    
-    def generate_mutex(self, new_table):
-        res = []
-        for k in new_table.keys():
-            for v in new_table[k]:
-                res.append((k, tuple(v), v[0]))
-        df = pd.DataFrame.from_records(res)
-        df = df.sort_values(by=[2]).reset_index()
+    def get_mutex(self, df):
+        """
+        Generates mutexes. Находит наличие одинаковых возможностей у разных спутников.
+        :param new_table: словарь типа "имя спутника : [возможности для этого спутнкиа]"
+        :return:
+        """
 
-        mutex = []
-        for uv in df[1].unique():
-            tmp = df[df[1] == uv].index.values
+        tmp_df = pd.DataFrame()
+        # tmp_df['index'] = df.index
+        tmp_df['origin'] = df.origin
+        tmp_df = tmp_df[~tmp_df['origin'].str.contains('Russia')]
+        tmp_df['data'] = df[['start_datetime', 'end_datetime']].apply(tuple, axis=1)
+
+        res_mutex = []
+        for uv in tmp_df['data'].unique():
+            tmp = tmp_df[tmp_df['data'] == uv].index.values
             if len(tmp) > 1:
-                mutex.append(tmp)
+                res_mutex.append(tmp)
+        return res_mutex
 
-        return mutex
-    
+    def load_data_for_calculation(self,
+                                  satellites: List[str],
+                                  stations: List[str]):
+        data_loader = DataLoader()
+        result_dict = []
+        # load data for Earth
+        for sat in satellites:
+            earth_sat_data = data_loader.get_data_for_sat_russia(sat, datetime_in_ms=True)
+            result_dict.append(earth_sat_data)
+        for station in stations:
+            # result_dict[station] = []
+            for sat in satellites:
+                station_sat_data = data_loader.get_data_for_sat_station(sat, station, datetime_in_ms=True)
+                result_dict.append(station_sat_data)
+        return result_dict
 
-    def long_partition(self, timeline, max_time_seconds=175):
-        """
-        Capacity in MBs
-        """
-        # imaging_speed = 4 * 128  # Mb / s
+    def restrict_by_duration(self, df, max_duration):
+        df_list = []
+        for _, row in df.iterrows():
+            if row['duration'] <= max_duration:
+                df_list.append(row)
+            else:
+                n_splits = ceil(row['duration'] / max_duration)
+                for i in range(n_splits):
+                    new_row = row.copy()
+                    new_row['start_datetime'] = row['start_datetime'] + i * max_duration
+                    new_row['duration'] = min(max_duration, row['duration'] - i * max_duration)
+                    new_row['end_datetime'] = new_row['start_datetime'] + new_row['duration']
+                    df_list.append(new_row)
+        res_df = pd.DataFrame(df_list).reset_index()
 
-        # taking mean
-        # max_imaging_time_seconds = 234 # capacity / imaging_speed
+        return res_df
 
-        new_timeline = {}
-        for satellite in timeline.keys():
-            new_intervals = []
-            for interval in timeline[satellite]:
-                duration = (interval[1] - interval[0]).seconds
-                if duration > max_time_seconds:
-                    partitions = int(duration // max_time_seconds)
-                    l = interval[0]
-                    for _ in range(partitions - 1):
-                        new_intervals.append([l, l + datetime.timedelta(seconds=max_time_seconds)])
-                        l += datetime.timedelta(seconds=max_time_seconds)
-                    new_intervals.append([l, interval[1]])
-                else:
-                    new_intervals.append([interval[0], interval[1]])
-                    
-            new_timeline[satellite] = new_intervals
-        
-        return new_timeline
+    def separate_by_others(self, dfs: List[pd.DataFrame]):
+        points = []
+        is_begins = []
+        origin_dfs = []
+        for df in dfs:
+            for _, row in df.iterrows():
+                points.extend([row.start_datetime, row.end_datetime])
+                is_begins.extend([1, 0])
+                origin_dfs.extend([row.connection, row.connection])
 
+        tmp_df = pd.DataFrame.from_dict({'point': points,
+                                         'is_begin': is_begins,
+                                         'origin_df': origin_dfs
+                                         }).sort_values('point')
 
-    
+        opened = set()
+        result_starts = []
+        result_ends = []
+        result_origin_dfs = []
+        prev_point = None
 
-    def timeline_partition_overlapping(self, list_dfs, list_satellite_names, start_name='start_datetime', end_name='end_datetime'):
-        """
-        Example of timeline input
-        [
-            (Timestamp('2027-06-01 00:00:01'), 'k2'),
-            (Timestamp('2027-06-01 00:05:28.157000'), 'k2'),
-            (Timestamp('2027-06-01 00:07:48.814000'), 'k1'),
-                                ....
-        ]
-        """
-        timeline = []
-        for df, satellite_name in zip(list_dfs, list_satellite_names):
-            for _, el in df.iterrows():
-                timeline.append((el[start_name], satellite_name))
-                timeline.append((el[end_name], satellite_name))
-        new_table = {}
-        is_opened = {}
+        for _, row in tmp_df.iterrows():
+            for o in opened:
+                result_starts.append(prev_point)
+                result_ends.append(row.point)
+                result_origin_dfs.append(o)
+            if row.is_begin:
+                opened.add(row.origin_df)
+            else:
+                opened.remove(row.origin_df)
+            prev_point = row.point
 
-        for el in sorted(timeline):
-            if el[1] not in new_table.keys():
-                new_table[el[1]] = [[el[0], None]]
-                is_opened[el[1]] = True
-                
-            opened = [i for i in is_opened.items() if i[1]]
-            if not is_opened[el[1]]:
-                is_opened[el[1]] = True
-                new_table[el[1]].append([el[0], None])
+        result_df = pd.DataFrame.from_dict({'start_datetime': result_starts,
+                                            'end_datetime': result_ends,
+                                            'origin': result_origin_dfs
+                                            })
+        result_df['duration'] = result_df.end_datetime - result_df.start_datetime
+        return result_df
 
-            for opened_el in opened:
-                if new_table[opened_el[0]][-1][0] != el[0]:
-                    new_table[opened_el[0]][-1][1] = el[0]
-                    if opened_el[0] != el[1]:
-                        new_table[opened_el[0]].append([el[0], None])
-                    else:
-                        is_opened[el[1]] = False
-        
-        return new_table
-    
+    def basic_data_pipeline(self,
+                            satellites: List[str],
+                            stations: List[str],
+                            max_duration):
+        data = self.load_data_for_calculation(satellites, stations)
+        data_after_separation = manager.separate_by_others(data)
+        data_with_restrict = manager.restrict_by_duration(data_after_separation, max_duration)
+        data_with_restrict.drop(columns=['index'])
+        return data_with_restrict
+
+    def get_mask(self, prepared_data):
+        return np.array(prepared_data[prepared_data['origin'].str.contains('Russia')].index.to_list())
+
+    def get_priorites(self, prepared_data):
+        priorites = np.zeros(len(prepared_data))
+        mask = self.get_mask(prepared_data)
+        priorites[mask] = 1
+        return priorites
+
+    def get_opportunity_memory_sizes(self, prepared_data, imaging_speed=512, dl_speed=128):
+        opportunity_memory_sizes = np.oneslen(prepared_data)
+        mask = self.get_mask(prepared_data)
+        opportunity_memory_sizes[mask] *= imaging_speed
+        opportunity_memory_sizes[~mask] *= dl_speed
+        return opportunity_memory_sizes
+
+    def get_imaging_indexes(self, prepared_data):
+        mask = self.get_mask(prepared_data)
+        return np.where(mask)[0]
+
+    def get_downlink_indexes(self, prepared_data):
+        mask = self.get_mask(prepared_data)
+        return np.where(~mask)[0]
+
+    def get_belongings(self, prepared_data):
+        return prepared_data['origin'].str[-14:]
+
+    def get_belongings_dict(self, prepared_data):
+        belongings = list(self.get_belongings(prepared_data))
+        my_dict = {}
+        for i, b in enumerate(belongings):
+            if b in my_dict:
+                my_dict[b].append(i)
+            else:
+                my_dict[b] = [i]
+        return my_dict
+
 
 if __name__ == "__main__":
     import time
     import pprint
 
     manager = InputManager()
-    t1 = datetime.datetime.now()
-    time.sleep(5)
-    t2 = datetime.datetime.now()
 
-    t3 = datetime.datetime.now()
-    time.sleep(1)
-    t4 = datetime.datetime.now()
-
-    dictionary = {'1': [[t1, t2], [t3, t4]]}
-
-    pprint.pprint(dictionary)
+    d = manager.basic_data_pipeline(['KinoSat_110301', 'KinoSat_110302', 'KinoSat_110401', 'KinoSat_110402'],
+                                    ['Moscow'], 150)
+    mutex = manager.get_mutex(d)
+    p = manager.get_priorites(d)
+    a = manager.get_belongings(d)
+    b = manager.get_belongings_dict(d)
     print()
-
-    a = manager.capacity_partition(timeline=dictionary, capacity=4 * 128)
-
-    pprint.pprint(a)
