@@ -40,18 +40,18 @@ def scenario_1():
     solver = ScheduleCalculator()
     solver.calculate(
         config_data=None,
-        num_opportunities = 4,
-        c=c,
-        d=d,
-        a=a,
-        s_img=s_img,
-        s_dl=s_dl,
-        s_mutex=s_mutex,
+        num_opportunities = 4, # len(prepared_data)
+        c=c, # priority
+        d=d, # vezde 1
+        a=a, # opportunity_memory
+        s_img=s_img, # image_indexes
+        s_dl=s_dl,  # dl_indexes
+        s_mutex=s_mutex, # mutex
         op_sat_id=op_sat_id,
         op_sat_id_dict=op_sat_id_dict,
-        n_sat=n_sat,
-        alpha=alpha,
-        cap=cap
+        n_sat=n_sat, # remove
+        alpha=alpha, # const,
+        cap=cap # const
     )
 
 if __name__ == '__main__':
