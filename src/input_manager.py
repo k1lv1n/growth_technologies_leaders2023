@@ -131,8 +131,8 @@ class InputManager:
                             stations: List[str],
                             max_duration):
         data = self.load_data_for_calculation(satellites, stations)
-        data_after_separation = manager.separate_by_others(data)
-        data_with_restrict = manager.restrict_by_duration(data_after_separation, max_duration)
+        data_after_separation = self.separate_by_others(data)
+        data_with_restrict = self.restrict_by_duration(data_after_separation, max_duration)
         data_with_restrict.drop(columns=['index'])
         return data_with_restrict
 
@@ -146,7 +146,7 @@ class InputManager:
         return priorites
 
     def get_opportunity_memory_sizes(self, prepared_data, imaging_speed=512, dl_speed=128):
-        opportunity_memory_sizes = np.oneslen(prepared_data)
+        opportunity_memory_sizes = np.ones(len(prepared_data))
         mask = self.get_mask(prepared_data)
         opportunity_memory_sizes[mask] *= imaging_speed
         opportunity_memory_sizes[~mask] *= dl_speed
@@ -175,8 +175,6 @@ class InputManager:
 
 
 if __name__ == "__main__":
-    import time
-    import pprint
 
     manager = InputManager()
 
