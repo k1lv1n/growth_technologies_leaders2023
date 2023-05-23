@@ -34,21 +34,22 @@ class ScheduleCalculator:
         return res
 
     def calculate(
-            self, 
-            config_data, 
-            num_opportunities, 
-            cap, 
-            s_mutex, 
-            s_img, 
-            s_dl, 
-            op_sat_id, 
+            self,
+            config_data,
+            num_opportunities,
+            cap,
+            s_mutex,
+            s_img,
+            s_dl,
+            op_sat_id,
             op_sat_id_dict,
-            a,
+            opportunity_memory_sizes,
             alpha,
-            d,
-            c
+            priorities,
+            d=None,
     ) -> pd.DataFrame:
-        
+        if d is None:
+            d = np.ones(num_opportunities)
         solver = pywraplp.Solver('Satellite', pywraplp.Solver.CBC_MIXED_INTEGER_PROGRAMMING)
 
         x = [solver.IntVar(0, 1, f'x{i}') for i in range(num_opportunities)]
@@ -68,13 +69,13 @@ class ScheduleCalculator:
             if pr_con_id is not None:
                 tmp = y[pr_con_id]
             if i in s_img:
-                solver.Add(y[i] == tmp + a[i] * x[i])
+                solver.Add(y[i] == tmp + opportunity_memory_sizes[i] * x[i])
             if i in s_dl:
-                solver.Add(y[i] >= tmp - a[i] * x[i])
+                solver.Add(y[i] >= tmp - opportunity_memory_sizes[i] * x[i])
 
         res = 0
         for i in range(num_opportunities):
-            res -= x[i] * c[i]
+            res -= x[i] * priorities[i]
             for k in self.__cond_for_moment_i(i, op_sat_id_dict).values():
                 res += y[k] * alpha * d[k]
         solver.Minimize(res)
