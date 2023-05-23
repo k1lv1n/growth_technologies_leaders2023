@@ -28,27 +28,28 @@ class ScheduleCalculator:
         res = {}
         for k in op_sat_id_dict:
             for el in op_sat_id_dict[k]:
-                if el > con_id:
+                if el >= con_id:
                     break
             res[k] = el
         return res
 
     def calculate(
-            self, 
-            config_data, 
-            num_opportunities, 
-            cap, 
-            s_mutex, 
-            s_img, 
-            s_dl, 
-            op_sat_id, 
+            self,
+            config_data,
+            num_opportunities,
+            cap,
+            s_mutex,
+            s_img,
+            s_dl,
+            op_sat_id,
             op_sat_id_dict,
-            a,
+            opportunity_memory_sizes,
             alpha,
-            d,
-            c
+            priorities,
+            d=None,
     ) -> pd.DataFrame:
-        
+        if d is None:
+            d = np.ones(num_opportunities)
         solver = pywraplp.Solver('Satellite', pywraplp.Solver.CBC_MIXED_INTEGER_PROGRAMMING)
 
         x = [solver.IntVar(0, 1, f'x{i}') for i in range(num_opportunities)]
@@ -62,19 +63,21 @@ class ScheduleCalculator:
 
         # Определяем ограничения
         for i in range(num_opportunities):
-            solver.Add(x[i] <= y[i])
+            # if i in s_img:
+            #     solver.Add(x[i] <= y[i])
             pr_con_id = self.__prev_con_id(i, op_sat_id, op_sat_id_dict)
             tmp = 0
             if pr_con_id is not None:
                 tmp = y[pr_con_id]
             if i in s_img:
-                solver.Add(y[i] == tmp + a[i] * x[i])
+                solver.Add(y[i] == tmp + opportunity_memory_sizes[i] * x[i])
             if i in s_dl:
-                solver.Add(y[i] >= tmp - a[i] * x[i])
+                solver.Add(y[i] >= tmp - opportunity_memory_sizes[i] * x[i])
+                solver.Add(y[i] <= tmp)
 
         res = 0
         for i in range(num_opportunities):
-            res -= x[i] * c[i]
+            res -= x[i] * priorities[i]
             for k in self.__cond_for_moment_i(i, op_sat_id_dict).values():
                 res += y[k] * alpha * d[k]
         solver.Minimize(res)

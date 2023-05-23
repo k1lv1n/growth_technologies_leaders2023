@@ -136,28 +136,28 @@ class InputManager:
         data_with_restrict.drop(columns=['index'])
         return data_with_restrict
 
-    def get_mask(self, prepared_data):
-        return np.array(prepared_data[prepared_data['origin'].str.contains('Russia')].index.to_list())
+    def get_russia_mask(self, prepared_data):
+        return prepared_data.index.isin( prepared_data[prepared_data['origin'].str.contains('Russia')].index)
 
     def get_priorites(self, prepared_data):
         priorites = np.zeros(len(prepared_data))
-        mask = self.get_mask(prepared_data)
+        mask = self.get_russia_mask(prepared_data)
         priorites[mask] = 1
         return priorites
 
     def get_opportunity_memory_sizes(self, prepared_data, imaging_speed=512, dl_speed=128):
-        opportunity_memory_sizes = np.ones(len(prepared_data))
-        mask = self.get_mask(prepared_data)
+        opportunity_memory_sizes = prepared_data.duration
+        mask = self.get_russia_mask(prepared_data)
         opportunity_memory_sizes[mask] *= imaging_speed
         opportunity_memory_sizes[~mask] *= dl_speed
         return opportunity_memory_sizes
 
     def get_imaging_indexes(self, prepared_data):
-        mask = self.get_mask(prepared_data)
+        mask = self.get_russia_mask(prepared_data)
         return np.where(mask)[0]
 
     def get_downlink_indexes(self, prepared_data):
-        mask = self.get_mask(prepared_data)
+        mask = self.get_russia_mask(prepared_data)
         return np.where(~mask)[0]
 
     def get_belongings(self, prepared_data):
