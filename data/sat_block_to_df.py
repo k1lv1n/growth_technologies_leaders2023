@@ -1,8 +1,10 @@
+from datetime import datetime
+
 import pandas as pd
 
 
 # data = open('1234.txt').read()
-def sat_block_to_df(sat_block):
+def sat_block_to_df(sat_block, datetime_in_ms):
     first_line_marker = sat_block.find('\n')
     first_line = sat_block[:first_line_marker]
     agent_1, _, agent_2 = first_line.split('-')
@@ -18,9 +20,17 @@ def sat_block_to_df(sat_block):
             line = pure_data[:pure_data.find('\n')]
             num, start_day, start_month, start_year, start_time, end_day, end_month, end_year, end_time, duration = line.split()
             nums.append(num)
-            durs.append(duration)
-            start_datetimes.append(pd.to_datetime(start_day + ' ' + start_month + ' ' + start_year + ' ' + start_time))
-            end_datetimes.append(pd.to_datetime(end_day + ' ' + end_month + ' ' + end_year + ' ' + end_time))
+            durs.append(float(duration))
+            if not datetime_in_ms:
+                start_datetimes.append(
+                    pd.to_datetime(start_day + ' ' + start_month + ' ' + start_year + ' ' + start_time))
+                end_datetimes.append(pd.to_datetime(end_day + ' ' + end_month + ' ' + end_year + ' ' + end_time))
+            else:
+                start_datetimes.append(
+                    datetime.strptime(start_day + ' ' + start_month + ' ' + start_year + ' ' + start_time,
+                                      '%d %b %Y %H:%M:%S.%f').timestamp())
+                end_datetimes.append(datetime.strptime(end_day + ' ' + end_month + ' ' + end_year + ' ' + end_time,
+                                                       '%d %b %Y %H:%M:%S.%f').timestamp())
             pure_data = pure_data[pure_data.find('\n') + 1:]
     except ValueError:
         pass
@@ -30,7 +40,10 @@ def sat_block_to_df(sat_block):
         'end_datetime': end_datetimes,
         'duration': durs
     })
-    return agent_1, agent_2, df
+    df['counter_agent'] = agent_1
+    df['satellite'] = agent_2
+    df['connection'] = agent_1 + '-' + agent_2
+    return df
 
 
 if __name__ == '__main__':
