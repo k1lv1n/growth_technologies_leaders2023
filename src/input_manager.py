@@ -10,6 +10,19 @@ import datetime
 
 from src.data_loader import DataLoader
 
+import time
+
+
+def timing_decorator(func):
+    def wrapper(*args, **kwargs):
+        start_time = time.time()
+        result = func(*args, **kwargs)
+        end_time = time.time()
+        print(f"Function {func.__name__} took {end_time - start_time:.5f} seconds to run.")
+        return result
+
+    return wrapper
+
 
 class InputManager:
 
@@ -34,6 +47,7 @@ class InputManager:
     def prepare_data(self):
         pass
 
+    @timing_decorator
     def get_mutex(self, df):
         """
         Generates mutexes. Находит наличие одинаковых возможностей у разных спутников.
@@ -42,18 +56,14 @@ class InputManager:
         """
 
         tmp_df = pd.DataFrame()
-        # tmp_df['index'] = df.index
         tmp_df['origin'] = df.origin
         tmp_df = tmp_df[~tmp_df['origin'].str.contains('Russia')]
         tmp_df['data'] = df[['start_datetime', 'end_datetime']].apply(tuple, axis=1)
 
-        res_mutex = []
-        for uv in tmp_df['data'].unique():
-            tmp = tmp_df[tmp_df['data'] == uv].index.values
-            if len(tmp) > 1:
-                res_mutex.append(tmp)
+        res_mutex = [list(group.index) for _, group in tmp_df.groupby('data') if len(group) > 1]
         return res_mutex
 
+    @timing_decorator
     def load_data_for_calculation(self,
                                   satellites: List[str],
                                   stations: List[str]):
@@ -70,6 +80,7 @@ class InputManager:
                 result_dict.append(station_sat_data)
         return result_dict
 
+    @timing_decorator
     def restrict_by_duration(self, df, max_duration):
         df_list = []
         for _, row in df.iterrows():
@@ -87,6 +98,7 @@ class InputManager:
 
         return res_df
 
+    @timing_decorator
     def separate_by_others(self, dfs: List[pd.DataFrame]):
         points = []
         is_begins = []
@@ -137,14 +149,16 @@ class InputManager:
         return data_with_restrict
 
     def get_russia_mask(self, prepared_data):
-        return prepared_data.index.isin( prepared_data[prepared_data['origin'].str.contains('Russia')].index)
+        return prepared_data.index.isin(prepared_data[prepared_data['origin'].str.contains('Russia')].index)
 
+    @timing_decorator
     def get_priorites(self, prepared_data):
         priorites = np.zeros(len(prepared_data))
         mask = self.get_russia_mask(prepared_data)
         priorites[mask] = 1
         return priorites
 
+    @timing_decorator
     def get_opportunity_memory_sizes(self, prepared_data, imaging_speed=512, dl_speed=128):
         opportunity_memory_sizes = prepared_data.duration
         mask = self.get_russia_mask(prepared_data)
@@ -160,9 +174,11 @@ class InputManager:
         mask = self.get_russia_mask(prepared_data)
         return np.where(~mask)[0]
 
+    @timing_decorator
     def get_belongings(self, prepared_data):
         return prepared_data['origin'].str[-14:]
 
+    @timing_decorator
     def get_belongings_dict(self, prepared_data):
         belongings = list(self.get_belongings(prepared_data))
         my_dict = {}
@@ -175,7 +191,6 @@ class InputManager:
 
 
 if __name__ == "__main__":
-
     manager = InputManager()
 
     d = manager.basic_data_pipeline(['KinoSat_110301', 'KinoSat_110302', 'KinoSat_110401', 'KinoSat_110402'],

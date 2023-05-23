@@ -7,6 +7,8 @@ import numpy as np
 from itertools import combinations
 import sys
 
+from src.input_manager import timing_decorator
+
 
 class ScheduleCalculator:
 
@@ -33,6 +35,7 @@ class ScheduleCalculator:
             res[k] = el
         return res
 
+    @timing_decorator
     def calculate(
             self,
             config_data,
