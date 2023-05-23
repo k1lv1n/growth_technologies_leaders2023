@@ -7,6 +7,8 @@ import numpy as np
 from itertools import combinations
 import sys
 
+from src.input_manager import timing_decorator
+
 
 class ScheduleCalculator:
 
@@ -33,6 +35,7 @@ class ScheduleCalculator:
             res[k] = el
         return res
 
+    @timing_decorator
     def calculate(
             self,
             config_data,
@@ -50,7 +53,7 @@ class ScheduleCalculator:
     ) -> pd.DataFrame:
         if d is None:
             d = np.ones(num_opportunities)
-        solver = pywraplp.Solver('Satellite', pywraplp.Solver.CBC_MIXED_INTEGER_PROGRAMMING)
+        solver = pywraplp.Solver('Satellite', pywraplp.Solver.CLP_LINEAR_PROGRAMMING)
 
         x = [solver.IntVar(0, 1, f'x{i}') for i in range(num_opportunities)]
         y = [solver.NumVar(0, cap, f'y{i}') for i in range(num_opportunities)]
@@ -86,9 +89,9 @@ class ScheduleCalculator:
         # solver.SetTimeLimit(10)
         status = solver.Solve()
 
-        original_stdout = sys.stdout # Save a reference to the original standard output
+        original_stdout = sys.stdout  # Save a reference to the original standard output
         with open('out.txt', 'w') as f:
-            sys.stdout = f # Change the standard output to the file we created.
+            sys.stdout = f  # Change the standard output to the file we created.
             print(f'{solver.wall_time()} ms')
 
             # Выводим результаты
@@ -97,9 +100,9 @@ class ScheduleCalculator:
                 print(f'Сумма приоритетов: {objective.Value()}')
                 for i in range(num_opportunities):
                     s = sum([round(y[k].solution_value()) for k in
-                            self.__cond_for_moment_i(i, op_sat_id_dict).values()])
+                             self.__cond_for_moment_i(i, op_sat_id_dict).values()])
                     print(
                         f'x{i}: {x[i].solution_value()}, y{i}: {round(y[i].solution_value())}, sat # {op_sat_id[i]}, sum={s}')
             else:
                 print('Решение не найдено')
-            sys.stdout = original_stdout 
+            sys.stdout = original_stdout
