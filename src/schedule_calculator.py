@@ -28,7 +28,7 @@ class ScheduleCalculator:
         res = {}
         for k in op_sat_id_dict:
             for el in op_sat_id_dict[k]:
-                if el > con_id:
+                if el >= con_id:
                     break
             res[k] = el
         return res
