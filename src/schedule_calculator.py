@@ -63,7 +63,8 @@ class ScheduleCalculator:
 
         # Определяем ограничения
         for i in range(num_opportunities):
-            solver.Add(x[i] <= y[i])
+            # if i in s_img:
+            #     solver.Add(x[i] <= y[i])
             pr_con_id = self.__prev_con_id(i, op_sat_id, op_sat_id_dict)
             tmp = 0
             if pr_con_id is not None:
@@ -72,6 +73,7 @@ class ScheduleCalculator:
                 solver.Add(y[i] == tmp + opportunity_memory_sizes[i] * x[i])
             if i in s_dl:
                 solver.Add(y[i] >= tmp - opportunity_memory_sizes[i] * x[i])
+                solver.Add(y[i] <= tmp)
 
         res = 0
         for i in range(num_opportunities):
