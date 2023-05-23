@@ -111,14 +111,14 @@ class ScheduleCalculator:
 
             # Выводим результаты
             if status == pywraplp.Solver.OPTIMAL:
-                print('Решение найдено')
-                print(f'Сумма приоритетов: {objective.Value()}')
+                print('Solution finded')
+                print(f'Priority summs: {objective.Value()}')
                 for i in range(num_opportunities):
                     print(i, op_sat_id[i], i in op_sat_id_dict['KinoSat_110301'],i in op_sat_id_dict['KinoSat_110302'])
-                    s = sum([round(y[k].solution_value()) for k in
-                             self.__cond_for_moment_i(i, op_sat_id_dict).values()])
-                    print(
-                        f'x{i}: {x[i].solution_value()}, {[round(y[k].solution_value()) for k in self.__cond_for_moment_i(i, op_sat_id_dict).values()]}, {op_sat_id[i]} , {self.__cond_for_moment_i(i, op_sat_id_dict)}')
+                    # s = sum([round(y[k].solution_value()) for k in
+                    #          self.__cond_for_moment_i(i, op_sat_id_dict).values()])
+                    print(f'x{i}: {x[i].solution_value()}, {[round(y[k].solution_value()) for k in self.__cond_for_moment_i(i, op_sat_id_dict).values()]}, {op_sat_id[i]} , {self.__cond_for_moment_i(i, op_sat_id_dict)}')
+                    print()
             else:
-                print('Решение не найдено')
+                print('Solution is not finded')
             sys.stdout = original_stdout

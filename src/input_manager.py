@@ -160,7 +160,7 @@ class InputManager:
 
     @timing_decorator
     def get_opportunity_memory_sizes(self, prepared_data, imaging_speed=512, dl_speed=128):
-        opportunity_memory_sizes = prepared_data.duration
+        opportunity_memory_sizes = prepared_data.duration.copy()
         mask = self.get_russia_mask(prepared_data)
         opportunity_memory_sizes[mask] *= imaging_speed
         opportunity_memory_sizes[~mask] *= dl_speed

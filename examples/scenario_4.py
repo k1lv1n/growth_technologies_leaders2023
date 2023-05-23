@@ -5,6 +5,8 @@
 import os
 import sys
 
+sys.path.insert(1, os.path.dirname('data'))
+
 from data.satallites_groups import sat_group_7
 from data.station_groups import russian_stations
 
