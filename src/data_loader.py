@@ -19,8 +19,10 @@ class DataLoader:
         project.
         """
         sat_group_id = sat_name[-4:-2]
-        file_name = f'AreaTarget-Russia-To-Satellite-KinoSat_{sat_group_id}_plane.txt'
-
+        if int(sat_group_id) <= 5:
+            file_name = f'Russia-To-Satellite-SatPlanes_1_5.txt'
+        else:
+            file_name = f'Russia-To-Satellite-SatPlanes_6_20.txt'
         try:
             path = os.path.join(os.getcwd(), 'data', 'Russia2Constellation', file_name)
             # path = f'{pathlib.Path(__file__).parent.parent}\\data\\Russia2Constellation\\{file_name}'

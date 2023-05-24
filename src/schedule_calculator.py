@@ -75,8 +75,8 @@ class ScheduleCalculator:
             d = np.ones(num_opportunities)
         solver = pywraplp.Solver('Satellite', pywraplp.Solver.CLP_LINEAR_PROGRAMMING)  # fastest yet
 
-        x = [solver.IntVar(0, 1, f'x{i}') for i in range(num_opportunities)]
-        y = [solver.NumVar(0, cap, f'y{i}') for i in range(num_opportunities)]
+        x = [solver.NumVar(0, 1, f'x{i}') for i in range(num_opportunities)]
+        y = [solver.NumVar(0, cap[i], f'y{i}') for i in range(num_opportunities)]
 
         objective = solver.Objective()
 
@@ -110,23 +110,23 @@ class ScheduleCalculator:
         status = solver.Solve()
 
         original_stdout = sys.stdout  # Save a reference to the original standard output
-        with open('out.txt', 'w') as f:
-            sys.stdout = f  # Change the standard output to the file we created.
-            print(f'{solver.wall_time()} ms')
+        # with open('out.txt', 'w') as f:
+        #     sys.stdout = f  # Change the standard output to the file we created.
+        #     print(f'{solver.wall_time()} ms')
 
-            # Выводим результаты
-            if status == pywraplp.Solver.OPTIMAL:
-                print('Решение найдено')
-                print(f'Сумма приоритетов: {objective.Value()}')
-                for i in range(num_opportunities):
-                    print(i, op_sat_id[i], i in op_sat_id_dict['KinoSat_110301'], i in op_sat_id_dict['KinoSat_110302'])
-                    s = sum([round(y[k].solution_value()) for k in
-                             self.__cond_for_moment_i(i, op_sat_id_dict).values()])
-                    print(
-                        f'x{i}: {x[i].solution_value()}, {[round(y[k].solution_value()) for k in self.__cond_for_moment_i(i, op_sat_id_dict).values()]}, {op_sat_id[i]} , {self.__cond_for_moment_i(i, op_sat_id_dict)}')
-            else:
-                print('Решение не найдено')
-            sys.stdout = original_stdout
+        #     # Выводим результаты
+        #     if status == pywraplp.Solver.OPTIMAL:
+        #         print('Решение найдено')
+        #         print(f'Сумма приоритетов: {objective.Value()}')
+        #         for i in range(num_opportunities):
+        #             print(i, op_sat_id[i], i in op_sat_id_dict['KinoSat_110301'], i in op_sat_id_dict['KinoSat_110302'])
+        #             s = sum([round(y[k].solution_value()) for k in
+        #                      self.__cond_for_moment_i(i, op_sat_id_dict).values()])
+        #             print(
+        #                 f'x{i}: {x[i].solution_value()}, {[round(y[k].solution_value()) for k in self.__cond_for_moment_i(i, op_sat_id_dict).values()]}, {op_sat_id[i]} , {self.__cond_for_moment_i(i, op_sat_id_dict)}')
+        #     else:
+        #         print('Решение не найдено')
+        #     sys.stdout = original_stdout
 
         transfered_data = []
         s_prev = 0
