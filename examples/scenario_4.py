@@ -19,9 +19,9 @@ import numpy as np
 if __name__ == '__main__':
     manager = InputManager()
     calculator = ScheduleCalculator()
-    d = manager.basic_data_pipeline(sat_group_7,
-                                    russian_stations,
-                                    150)
+    d = manager.basic_data_pipeline(['KinoSat_110301', 'KinoSat_110302'],
+                                    ['Moscow'],
+                                    50)
 
     s_mutex = manager.get_mutex(d)
     s_img = manager.get_imaging_indexes(d)

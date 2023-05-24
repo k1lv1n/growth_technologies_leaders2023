@@ -27,12 +27,27 @@ class ScheduleCalculator:
             prev_con = el
 
     def __cond_for_moment_i(self, con_id, op_sat_id_dict):
+        def find_position(arr, new_elem):
+            left = 0
+            right = len(arr) - 1
+            while left <= right:
+                mid = (left + right) // 2
+                if new_elem == arr[mid]:
+                    return mid
+                elif new_elem < arr[mid]:
+                    right = mid - 1
+                else:
+                    left = mid + 1
+            return left
+
         res = {}
         for k in op_sat_id_dict:
-            for el in op_sat_id_dict[k]:
-                if el >= con_id:
-                    break
-            res[k] = el
+            pos = find_position(op_sat_id_dict[k], con_id)
+            if pos == 0:
+                if op_sat_id_dict[k][0] <= con_id:
+                    res[k] = op_sat_id_dict[k][0]
+            else:
+                res[k] = op_sat_id_dict[k][pos - 1]
         return res
 
     @timing_decorator
@@ -99,10 +114,11 @@ class ScheduleCalculator:
                 print('Решение найдено')
                 print(f'Сумма приоритетов: {objective.Value()}')
                 for i in range(num_opportunities):
+                    print(i, op_sat_id[i], i in op_sat_id_dict['KinoSat_110301'],i in op_sat_id_dict['KinoSat_110302'])
                     s = sum([round(y[k].solution_value()) for k in
                              self.__cond_for_moment_i(i, op_sat_id_dict).values()])
                     print(
-                        f'x{i}: {x[i].solution_value()}, y{i}: {round(y[i].solution_value())}, sat # {op_sat_id[i]}, sum={s}')
+                        f'x{i}: {x[i].solution_value()}, {[round(y[k].solution_value()) for k in self.__cond_for_moment_i(i, op_sat_id_dict).values()]}, {op_sat_id[i]} , {self.__cond_for_moment_i(i, op_sat_id_dict)}')
             else:
                 print('Решение не найдено')
             sys.stdout = original_stdout
