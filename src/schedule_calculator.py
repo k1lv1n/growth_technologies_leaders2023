@@ -87,7 +87,7 @@ class ScheduleCalculator:
         # Определяем ограничения
         for i in range(num_opportunities):
             # if i in s_img:
-            #     solver.Add(x[i] <= y[i])
+            # solver.Add(x[i] <= y[i])
             pr_con_id = self.__prev_con_id(i, op_sat_id, op_sat_id_dict)
             tmp = 0
             if pr_con_id is not None:
@@ -106,7 +106,7 @@ class ScheduleCalculator:
         solver.Minimize(res)
 
         # Решаем задачу
-        # solver.SetTimeLimit(10)
+            # solver.SetTimeLimit(10)
         status = solver.Solve()
 
         original_stdout = sys.stdout  # Save a reference to the original standard output
