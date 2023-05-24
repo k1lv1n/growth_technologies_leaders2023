@@ -73,7 +73,7 @@ class ScheduleCalculator:
     ) -> pd.DataFrame:
         if d is None:
             d = np.ones(num_opportunities)
-        solver = pywraplp.Solver('Satellite', pywraplp.Solver.CBC_MIXED_INTEGER_PROGRAMMING)
+        solver = pywraplp.Solver('Satellite', pywraplp.Solver.CLP_LINEAR_PROGRAMMING)  # fastest yet
 
         x = [solver.IntVar(0, 1, f'x{i}') for i in range(num_opportunities)]
         y = [solver.NumVar(0, cap, f'y{i}') for i in range(num_opportunities)]
@@ -116,18 +116,18 @@ class ScheduleCalculator:
 
             # Выводим результаты
             if status == pywraplp.Solver.OPTIMAL:
-                print('Solution finded')
-                print(f'Priority summs: {objective.Value()}')
+                print('Решение найдено')
+                print(f'Сумма приоритетов: {objective.Value()}')
                 for i in range(num_opportunities):
-                    # print(i, op_sat_id[i], i in op_sat_id_dict['KinoSat_110301'],i in op_sat_id_dict['KinoSat_110302'])
-                    # s = sum([round(y[k].solution_value()) for k in
-                    #          self.__cond_for_moment_i(i, op_sat_id_dict).values()])
-                    print(f'x{i}: {x[i].solution_value()}, {[round(y[k].solution_value()) for k in self.__cond_for_moment_i(i, op_sat_id_dict).values()]}, {op_sat_id[i]} , {self.__cond_for_moment_i(i, op_sat_id_dict)}')
-                    print()
+                    print(i, op_sat_id[i], i in op_sat_id_dict['KinoSat_110301'], i in op_sat_id_dict['KinoSat_110302'])
+                    s = sum([round(y[k].solution_value()) for k in
+                             self.__cond_for_moment_i(i, op_sat_id_dict).values()])
+                    print(
+                        f'x{i}: {x[i].solution_value()}, {[round(y[k].solution_value()) for k in self.__cond_for_moment_i(i, op_sat_id_dict).values()]}, {op_sat_id[i]} , {self.__cond_for_moment_i(i, op_sat_id_dict)}')
             else:
-                print('Solution is not finded')
+                print('Решение не найдено')
             sys.stdout = original_stdout
-        
+
         transfered_data = []
         s_prev = 0
         for i in range(num_opportunities):
@@ -137,7 +137,6 @@ class ScheduleCalculator:
                 s_prev = s
             else:
                 transfered_data.append(0)
-
 
         x_series = pd.Series([x[i].solution_value() for i in range(num_opportunities)], copy=False)
 
