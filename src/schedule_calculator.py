@@ -47,7 +47,12 @@ class ScheduleCalculator:
                 if op_sat_id_dict[k][0] <= con_id:
                     res[k] = op_sat_id_dict[k][0]
             else:
-                res[k] = op_sat_id_dict[k][pos - 1]
+                if pos == len(op_sat_id_dict[k]) or con_id < op_sat_id_dict[k][pos]:
+                    res_pos = pos - 1
+                else:
+                    res_pos = pos
+                res[k] = op_sat_id_dict[k][res_pos]
+
         return res
 
     @timing_decorator

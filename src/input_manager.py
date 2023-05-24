@@ -193,10 +193,10 @@ class InputManager:
 if __name__ == "__main__":
     manager = InputManager()
 
-    d = manager.basic_data_pipeline(['KinoSat_110301', 'KinoSat_110302', 'KinoSat_110401', 'KinoSat_110402'],
-                                    ['Moscow'], 150)
-    mutex = manager.get_mutex(d)
-    p = manager.get_priorites(d)
+    d = manager.basic_data_pipeline(['KinoSat_110301', 'KinoSat_110302'],
+                                    ['Moscow'], 50)
+    # mutex = manager.get_mutex(d)
+    # p = manager.get_priorites(d)
     a = manager.get_belongings(d)
     b = manager.get_belongings_dict(d)
     print()
