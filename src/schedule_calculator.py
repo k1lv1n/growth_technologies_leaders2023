@@ -73,7 +73,7 @@ class ScheduleCalculator:
     ) -> pd.DataFrame:
         if d is None:
             d = np.ones(num_opportunities)
-        solver = pywraplp.Solver('Satellite', pywraplp.Solver.CLP_LINEAR_PROGRAMMING)
+        solver = pywraplp.Solver('Satellite', pywraplp.Solver.CBC_MIXED_INTEGER_PROGRAMMING)
 
         x = [solver.IntVar(0, 1, f'x{i}') for i in range(num_opportunities)]
         y = [solver.NumVar(0, cap, f'y{i}') for i in range(num_opportunities)]
@@ -119,7 +119,7 @@ class ScheduleCalculator:
                 print('Solution finded')
                 print(f'Priority summs: {objective.Value()}')
                 for i in range(num_opportunities):
-                    print(i, op_sat_id[i], i in op_sat_id_dict['KinoSat_110301'],i in op_sat_id_dict['KinoSat_110302'])
+                    # print(i, op_sat_id[i], i in op_sat_id_dict['KinoSat_110301'],i in op_sat_id_dict['KinoSat_110302'])
                     # s = sum([round(y[k].solution_value()) for k in
                     #          self.__cond_for_moment_i(i, op_sat_id_dict).values()])
                     print(f'x{i}: {x[i].solution_value()}, {[round(y[k].solution_value()) for k in self.__cond_for_moment_i(i, op_sat_id_dict).values()]}, {op_sat_id[i]} , {self.__cond_for_moment_i(i, op_sat_id_dict)}')
@@ -127,3 +127,22 @@ class ScheduleCalculator:
             else:
                 print('Solution is not finded')
             sys.stdout = original_stdout
+        
+        transfered_data = []
+        s_prev = 0
+        for i in range(num_opportunities):
+            s = sum([round(y[k].solution_value()) for k in self.__cond_for_moment_i(i, op_sat_id_dict).values()])
+            if s_prev != s and x[i].solution_value() > 0:
+                transfered_data.append(s - s_prev)
+                s_prev = s
+            else:
+                transfered_data.append(0)
+
+
+        x_series = pd.Series([x[i].solution_value() for i in range(num_opportunities)], copy=False)
+
+        out_df = pd.DataFrame()
+        out_df['is_used_opportunity'] = x_series
+        out_df['transfered_date'] = transfered_data
+        cleared_df = out_df.drop(out_df[(out_df['is_used_opportunity'] > 0) & (out_df['transfered_date'] == 0)].index)
+        return cleared_df

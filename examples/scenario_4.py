@@ -21,9 +21,11 @@ import numpy as np
 if __name__ == '__main__':
     manager = InputManager()
     calculator = ScheduleCalculator()
-    d = manager.basic_data_pipeline(['KinoSat_110301', 'KinoSat_110302'],
+    d = manager.basic_data_pipeline(['KinoSat_110301'],
                                     ['Moscow'],
                                     50)
+
+    # d = manager.basic_data_pipeline(sat_group_7, russian_stations, 50)
 
     s_mutex = manager.get_mutex(d)
     s_img = manager.get_imaging_indexes(d)
@@ -32,7 +34,7 @@ if __name__ == '__main__':
     op_sat_id_dict = manager.get_belongings_dict(d)
     opportunity_memory_sizes = manager.get_opportunity_memory_sizes(d)
 
-    calculator.calculate(
+    out = calculator.calculate(
         config_data=None,
         num_opportunities=len(d),
         cap=10 ** 9,
@@ -46,3 +48,8 @@ if __name__ == '__main__':
         d=np.ones(len(d)),
         priorities=manager.get_priorites(d),
     )
+
+    d.drop(columns='index', inplace=True)
+    final = out.merge(d, how='left', left_index=True, right_index=True)
+    final.to_csv('out.csv')
+    print(123)
