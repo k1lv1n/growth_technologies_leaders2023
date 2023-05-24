@@ -5,8 +5,6 @@
 import os
 import sys
 
-sys.path.insert(1, os.path.dirname('data'))
-
 from data.satallites_groups import sat_group_7
 from data.station_groups import russian_stations
 
@@ -21,11 +19,10 @@ import numpy as np
 if __name__ == '__main__':
     manager = InputManager()
     calculator = ScheduleCalculator()
-    d = manager.basic_data_pipeline(['KinoSat_110301'],
-                                    ['Moscow'],
-                                    50)
-
-    # d = manager.basic_data_pipeline(sat_group_7, russian_stations, 50)
+    d = manager.basic_data_pipeline(
+        ['KinoSat_110301', 'KinoSat_110302', 'KinoSat_110303', 'KinoSat_110304', 'KinoSat_110305'],
+        ['Norilsk', 'Novosib', 'Moscow', 'Murmansk1'],
+        50)
 
     s_mutex = manager.get_mutex(d)
     s_img = manager.get_imaging_indexes(d)
