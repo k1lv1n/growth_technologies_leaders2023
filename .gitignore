@@ -2,3 +2,5 @@ __pycache__/
 __pycache__
 *.py[cod]
 src/__pycache__/schedule_calculator.cpython-311.pyc
+
+out.txt

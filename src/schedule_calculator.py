@@ -27,12 +27,32 @@ class ScheduleCalculator:
             prev_con = el
 
     def __cond_for_moment_i(self, con_id, op_sat_id_dict):
+        def find_position(arr, new_elem):
+            left = 0
+            right = len(arr) - 1
+            while left <= right:
+                mid = (left + right) // 2
+                if new_elem == arr[mid]:
+                    return mid
+                elif new_elem < arr[mid]:
+                    right = mid - 1
+                else:
+                    left = mid + 1
+            return left
+
         res = {}
         for k in op_sat_id_dict:
-            for el in op_sat_id_dict[k]:
-                if el >= con_id:
-                    break
-            res[k] = el
+            pos = find_position(op_sat_id_dict[k], con_id)
+            if pos == 0:
+                if op_sat_id_dict[k][0] <= con_id:
+                    res[k] = op_sat_id_dict[k][0]
+            else:
+                if pos == len(op_sat_id_dict[k]) or con_id < op_sat_id_dict[k][pos]:
+                    res_pos = pos - 1
+                else:
+                    res_pos = pos
+                res[k] = op_sat_id_dict[k][res_pos]
+
         return res
 
     @timing_decorator
@@ -53,7 +73,7 @@ class ScheduleCalculator:
     ) -> pd.DataFrame:
         if d is None:
             d = np.ones(num_opportunities)
-        solver = pywraplp.Solver('Satellite', pywraplp.Solver.CLP_LINEAR_PROGRAMMING)
+        solver = pywraplp.Solver('Satellite', pywraplp.Solver.CLP_LINEAR_PROGRAMMING)  # fastest yet
 
         x = [solver.IntVar(0, 1, f'x{i}') for i in range(num_opportunities)]
         y = [solver.NumVar(0, cap, f'y{i}') for i in range(num_opportunities)]
@@ -99,10 +119,29 @@ class ScheduleCalculator:
                 print('Решение найдено')
                 print(f'Сумма приоритетов: {objective.Value()}')
                 for i in range(num_opportunities):
+                    print(i, op_sat_id[i], i in op_sat_id_dict['KinoSat_110301'], i in op_sat_id_dict['KinoSat_110302'])
                     s = sum([round(y[k].solution_value()) for k in
                              self.__cond_for_moment_i(i, op_sat_id_dict).values()])
                     print(
-                        f'x{i}: {x[i].solution_value()}, y{i}: {round(y[i].solution_value())}, sat # {op_sat_id[i]}, sum={s}')
+                        f'x{i}: {x[i].solution_value()}, {[round(y[k].solution_value()) for k in self.__cond_for_moment_i(i, op_sat_id_dict).values()]}, {op_sat_id[i]} , {self.__cond_for_moment_i(i, op_sat_id_dict)}')
             else:
                 print('Решение не найдено')
             sys.stdout = original_stdout
+
+        transfered_data = []
+        s_prev = 0
+        for i in range(num_opportunities):
+            s = sum([round(y[k].solution_value()) for k in self.__cond_for_moment_i(i, op_sat_id_dict).values()])
+            if s_prev != s and x[i].solution_value() > 0:
+                transfered_data.append(s - s_prev)
+                s_prev = s
+            else:
+                transfered_data.append(0)
+
+        x_series = pd.Series([x[i].solution_value() for i in range(num_opportunities)], copy=False)
+
+        out_df = pd.DataFrame()
+        out_df['is_used_opportunity'] = x_series
+        out_df['transfered_date'] = transfered_data
+        cleared_df = out_df.drop(out_df[(out_df['is_used_opportunity'] > 0) & (out_df['transfered_date'] == 0)].index)
+        return cleared_df
