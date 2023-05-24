@@ -142,6 +142,6 @@ class ScheduleCalculator:
 
         out_df = pd.DataFrame()
         out_df['is_used_opportunity'] = x_series
-        out_df['transfered_date'] = transfered_data
-        cleared_df = out_df.drop(out_df[(out_df['is_used_opportunity'] > 0) & (out_df['transfered_date'] == 0)].index)
+        out_df['transfered_data'] = transfered_data
+        cleared_df = out_df.drop(out_df[(out_df['is_used_opportunity'] > 0) & (out_df['transfered_data'] == 0)].index)
         return cleared_df
