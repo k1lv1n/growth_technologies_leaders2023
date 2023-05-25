@@ -1,54 +1,52 @@
-"""
-sample test
-"""
-import unittest 
-import sys
+import pytest
+import pandas as pd
 import os
-import numpy as np
-sys.path.insert(1, os.path.dirname('src'))
-from src.schedule_calculator import ScheduleCalculator
+import pprint
+
+out_filename = 'out.csv'
+
+class TestInfoConservation:
+    def test_total_summ_data(self, out_file_path=os.path.join(os.path.dirname(os.getcwd()), out_filename)):
+        df = pd.read_csv(out_file_path)
+        s = sum(df['transfered_data'])
+        assert s == 0, 'Total sum of imaging and downlinking amount of data must be equal to 0'
+    
+
+    def test_check_one_zero_opp_data_amount(self, out_file_path=os.path.join(os.path.dirname(os.getcwd()), out_filename)):
+        df = pd.read_csv(out_file_path)
+        for _, el in df.iterrows():
+            normal = True
+            if el['is_used_opportunity'] == 0 and el['transfered_data'] == 1:
+                normal = False
+            assert normal == True, 'If 0 amount data transferred - opp must not be used'
 
 
-class TestScheduleCalculator(unittest.TestCase):
-    def setUp(self):
-        self.sched_calc = ScheduleCalculator()
+    def test_check_memory_overflow_satellite(self, out_file_path=os.path.join(os.path.dirname(os.getcwd()), out_filename),
+                                        kinosat_cap=10 ** 6, zorkiy_cap=0.5 * 10 ** 6):
+        df = pd.read_csv(out_file_path)
 
-    def test_get_pairs(self):
-        input_data = "abc"
-        expected_output = [("a", "b"), ("a", "c"), ("b", "c")]
-        self.assertEqual(self.sched_calc._ScheduleCalculator__get_pairs(input_data), expected_output)
+        sattelites_data_dict = dict()
+        for _, el in df.iterrows():
+            if el['origin'][-14:] not in sattelites_data_dict:
+                sattelites_data_dict[el['origin'][-14:]] = el['transfered_data']
+            else:
+                sattelites_data_dict[el['origin'][-14:]] += el['transfered_data']
 
-    def test_prev_con_id(self):
-        con_id = 2
-        op_sat_id = [1, 2, 1, 2]
-        op_sat_id_dict = {1: [0, 2], 2: [1, 3]}
-        expected_output = 0
-        self.assertEqual(self.sched_calc._ScheduleCalculator__prev_con_id(con_id, op_sat_id, op_sat_id_dict), expected_output)
+            max_cap = kinosat_cap if int(el['origin'][-4:-2]) <= 5 else zorkiy_cap
 
-    def test_cond_for_moment_i(self):
-        con_id = 2
-        op_sat_id_dict = {1: [0, 2], 2: [1, 3]}
-        expected_output = {1: 2, 2:3}
-        self.assertEqual(self.sched_calc._ScheduleCalculator__cond_for_moment_i(con_id, op_sat_id_dict), expected_output)
-
-    # def test_calculate(self):
-    #     config_data = ""
-    #     data = {
-    #         "num_opportunities": 4,
-    #         "cap": 1,
-    #         "s_mutex": [(1, 2)],
-    #         "op_sat_id": [1, 2, 1, 2],
-    #         "op_sat_id_dict": {1: [0, 2], 2: [1, 3]},
-    #         "s_img": [0, 2],
-    #         "a": [0, 1, 0, 1],
-    #         "s_dl": [1, 3],
-    #         "c": [1, 2, 3, 4],
-    #         "alpha": 2,
-    #         "d": [5, 6, 7, 8]
-    #     }
-    #     expected_output = pd.DataFrame({'x': [0.0, 1.0, 0.0, 1.0], 'y': [0.0, 1.0, 0.0, 0.0]})
-    #     self.assertTrue(self.sched_calc.calculate(config_data, **data).equals(expected_output))
+            assert sattelites_data_dict[el['origin'][-14:]] <= max_cap, f'Sattelite memory overflowed!\n\ndict: {sattelites_data_dict}'
 
 
-if __name__ == '__main__': 
-    unittest.main()
+    def test_check_proper_sign_for_downlink_and_imaging(self, out_file_path=os.path.join(os.path.dirname(os.getcwd()), out_filename)):
+        df = pd.read_csv(out_file_path)
+
+        is_ok_downlinking = True
+        is_ok_imaging = True
+        for _, el in df.iterrows():
+            if el['origin'][0:6] == 'Russia' and el['transfered_data'] < 0:
+                is_ok_imaging = False
+
+            if el['origin'][0:6] != 'Russia' and el['transfered_data'] > 0:
+                is_ok_downlinking = False
+            
+        assert is_ok_imaging and is_ok_downlinking, 'Wrong sign of transferring data'

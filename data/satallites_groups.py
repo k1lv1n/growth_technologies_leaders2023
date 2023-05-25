@@ -1,3 +1,23 @@
+sat_group_1 = ['KinoSat_110101',
+               'KinoSat_110102',
+               'KinoSat_110103',
+               'KinoSat_110104',
+               'KinoSat_110105',
+               'KinoSat_110106',
+               'KinoSat_110107',
+               'KinoSat_110108',
+               'KinoSat_110109',
+               'KinoSat_110110']
+sat_group_2 = ['KinoSat_110201',
+               'KinoSat_110202',
+               'KinoSat_110203',
+               'KinoSat_110204',
+               'KinoSat_110205',
+               'KinoSat_110206',
+               'KinoSat_110207',
+               'KinoSat_110208',
+               'KinoSat_110209',
+               'KinoSat_110210']
 sat_group_3 = ['KinoSat_110301',
                'KinoSat_110302',
                'KinoSat_110303',
@@ -41,11 +61,11 @@ sat_group_6 = ['KinoSat_110601',
 sat_group_7 = ['KinoSat_110701',
                'KinoSat_110702',
                'KinoSat_110703',
-               # 'KinoSat_110704',
-               # 'KinoSat_110705',
-               # 'KinoSat_110706',
-               # 'KinoSat_110707',
-               # 'KinoSat_110708',
+               'KinoSat_110704',
+               'KinoSat_110705',
+               'KinoSat_110706',
+               'KinoSat_110707',
+               'KinoSat_110708',
                'KinoSat_110709',
                'KinoSat_110710']
 sat_group_8 = ['KinoSat_110801',
@@ -78,3 +98,7 @@ sat_group_10 = ['KinoSat_111001',
                 'KinoSat_111008',
                 'KinoSat_111009',
                 'KinoSat_111010']
+
+sat_half_groups = sat_group_1 + sat_group_2 + sat_group_3 + sat_group_4 + sat_group_5
+
+sat_all_groups = sat_group_1 + sat_group_2 + sat_group_3 + sat_group_4 + sat_group_5 + sat_group_6 + sat_group_7 + sat_group_8 + sat_group_9 + sat_group_10
