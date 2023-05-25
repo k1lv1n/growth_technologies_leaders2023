@@ -54,7 +54,7 @@ if __name__ == '__main__':
         priorities=priorities,
     )
 
-    d.drop(columns='index', inplace=True)
+    # d.drop(columns='index', inplace=True)
     final = out.merge(d, how='left', left_index=True, right_index=True)
     final.to_csv('out.csv')
     print('ended')
