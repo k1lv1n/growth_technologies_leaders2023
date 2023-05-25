@@ -1,24 +1,25 @@
 """
 Файл с классом InputManager. InputManager отвечает за обработку входных файлов.
 """
+import time
 from math import ceil
 from typing import List
 
 import numpy as np
 import pandas as pd
-import datetime
 
 from src.data_loader import DataLoader
 
-import time
+from memory_profiler import memory_usage
 
 
-def timing_decorator(func):
+def measure_memory_and_time(func):
     def wrapper(*args, **kwargs):
         start_time = time.time()
-        result = func(*args, **kwargs)
+        peak_memory, result = memory_usage((func, args, kwargs), max_usage=True, retval=True)
         end_time = time.time()
-        print(f"Function {func.__name__} took {end_time - start_time:.5f} seconds to run.")
+        print(
+            f"Peak memory usage: {peak_memory:.2f} MiB. Function {func.__name__} took {end_time - start_time:.5f} seconds to run.")
         return result
 
     return wrapper
@@ -47,7 +48,7 @@ class InputManager:
     def prepare_data(self):
         pass
 
-    @timing_decorator
+    @measure_memory_and_time
     def get_mutex(self, df):
         """
         Generates mutexes. Находит наличие одинаковых возможностей у разных спутников.
@@ -63,7 +64,7 @@ class InputManager:
         res_mutex = [list(group.index) for _, group in tmp_df.groupby('data') if len(group) > 1]
         return res_mutex
 
-    @timing_decorator
+    @measure_memory_and_time
     def load_data_for_calculation(self,
                                   satellites: List[str],
                                   stations: List[str]):
@@ -80,7 +81,7 @@ class InputManager:
                 result_dict.append(station_sat_data)
         return result_dict
 
-    @timing_decorator
+    @measure_memory_and_time
     def restrict_by_duration(self, df, max_duration):
         df_list = []
         for _, row in df.iterrows():
@@ -98,7 +99,21 @@ class InputManager:
 
         return res_df
 
-    @timing_decorator
+    @measure_memory_and_time
+    def restrict_by_duration_ai(self, df, max_duration):
+        df_filtered = df.loc[df['duration'] <= max_duration]
+        df_splits = [row for _, row in df.loc[df['duration'] > max_duration].iterrows()
+                     for i in range(int(row['duration'] // max_duration))]
+        df_splits += [row.copy() for _, row in df.loc[df['duration'] > max_duration].iterrows()
+                      if row['duration'] % max_duration > 0]
+        for i, row in enumerate(df_splits):
+            row['start_datetime'] += i * max_duration
+            row['duration'] = min(max_duration, row['duration'] - i * max_duration)
+            row['end_datetime'] = row['start_datetime'] + row['duration']
+        res_df = pd.concat([df_filtered, pd.DataFrame(df_splits)]).reset_index(drop=True)
+        return res_df
+
+    @measure_memory_and_time
     def separate_by_others(self, dfs: List[pd.DataFrame]):
         points = []
         is_begins = []
@@ -144,21 +159,21 @@ class InputManager:
                             max_duration):
         data = self.load_data_for_calculation(satellites, stations)
         data_after_separation = self.separate_by_others(data)
-        data_with_restrict = self.restrict_by_duration(data_after_separation, max_duration)
-        data_with_restrict.drop(columns=['index'])
+        data_after_separation_no_short = data_after_separation[data_after_separation.duration > 1]
+        data_with_restrict = self.restrict_by_duration_ai(data_after_separation_no_short, max_duration)  # 20 sec
         return data_with_restrict
 
     def get_russia_mask(self, prepared_data):
         return prepared_data.index.isin(prepared_data[prepared_data['origin'].str.contains('Russia')].index)
 
-    @timing_decorator
+    @measure_memory_and_time
     def get_priorites(self, prepared_data):
         priorites = np.zeros(len(prepared_data))
         mask = self.get_russia_mask(prepared_data)
         priorites[mask] = 1
         return priorites
 
-    @timing_decorator
+    @measure_memory_and_time
     def get_opportunity_memory_sizes(self, prepared_data, imaging_speed=512, dl_speed=128):
         opportunity_memory_sizes = prepared_data.duration.copy()
         mask = self.get_russia_mask(prepared_data)
@@ -174,11 +189,11 @@ class InputManager:
         mask = self.get_russia_mask(prepared_data)
         return np.where(~mask)[0]
 
-    @timing_decorator
+    @measure_memory_and_time
     def get_belongings(self, prepared_data):
         return prepared_data['origin'].str[-14:]
 
-    @timing_decorator
+    @measure_memory_and_time
     def get_belongings_dict(self, prepared_data):
         belongings = list(self.get_belongings(prepared_data))
         my_dict = {}

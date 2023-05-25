@@ -7,7 +7,7 @@ import numpy as np
 from itertools import combinations
 import sys
 
-from src.input_manager import timing_decorator
+from src.input_manager import measure_memory_and_time
 
 
 class ScheduleCalculator:
@@ -55,7 +55,7 @@ class ScheduleCalculator:
 
         return res
 
-    @timing_decorator
+    @measure_memory_and_time
     def calculate(
             self,
             config_data,
@@ -75,7 +75,7 @@ class ScheduleCalculator:
             d = np.ones(num_opportunities)
         solver = pywraplp.Solver('Satellite', pywraplp.Solver.CLP_LINEAR_PROGRAMMING)  # fastest yet
 
-        x = [solver.IntVar(0, 1, f'x{i}') for i in range(num_opportunities)]
+        x = [solver.BoolVar(f'x{i}') for i in range(num_opportunities)]
         y = [solver.NumVar(0, cap, f'y{i}') for i in range(num_opportunities)]
 
         objective = solver.Objective()
@@ -86,8 +86,6 @@ class ScheduleCalculator:
 
         # Определяем ограничения
         for i in range(num_opportunities):
-            # if i in s_img:
-            # solver.Add(x[i] <= y[i])
             pr_con_id = self.__prev_con_id(i, op_sat_id, op_sat_id_dict)
             tmp = 0
             if pr_con_id is not None:
