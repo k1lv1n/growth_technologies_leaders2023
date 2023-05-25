@@ -99,7 +99,21 @@ class InputManager:
 
         return res_df
 
-    @timing_decorator
+    @measure_memory_and_time
+    def restrict_by_duration_ai(self, df, max_duration):
+        df_filtered = df.loc[df['duration'] <= max_duration]
+        df_splits = [row for _, row in df.loc[df['duration'] > max_duration].iterrows()
+                     for i in range(int(row['duration'] // max_duration))]
+        df_splits += [row.copy() for _, row in df.loc[df['duration'] > max_duration].iterrows()
+                      if row['duration'] % max_duration > 0]
+        for i, row in enumerate(df_splits):
+            row['start_datetime'] += i * max_duration
+            row['duration'] = min(max_duration, row['duration'] - i * max_duration)
+            row['end_datetime'] = row['start_datetime'] + row['duration']
+        res_df = pd.concat([df_filtered, pd.DataFrame(df_splits)]).reset_index(drop=True)
+        return res_df
+
+    @measure_memory_and_time
     def separate_by_others(self, dfs: List[pd.DataFrame]):
         points = []
         is_begins = []
@@ -145,8 +159,8 @@ class InputManager:
                             max_duration):
         data = self.load_data_for_calculation(satellites, stations)
         data_after_separation = self.separate_by_others(data)
-        data_with_restrict = self.restrict_by_duration(data_after_separation, max_duration)
-        data_with_restrict.drop(columns=['index'])
+        data_after_separation_no_short = data_after_separation[data_after_separation.duration > 1]
+        data_with_restrict = self.restrict_by_duration_ai(data_after_separation_no_short, max_duration)  # 20 sec
         return data_with_restrict
 
     def get_russia_mask(self, prepared_data):
