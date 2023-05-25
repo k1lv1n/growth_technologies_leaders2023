@@ -1,5 +1,4 @@
 import os
-import pathlib
 
 from loguru import logger
 
@@ -23,7 +22,8 @@ class DataLoader:
         file_name = f'AreaTarget-Russia-To-Satellite-KinoSat_{sat_group_id}_plane.txt'
 
         try:
-            path = f'{pathlib.Path(__file__).parent.parent}\\data\\Russia2Constellation\\{file_name}'
+            path = os.path.join(os.getcwd(), 'data', 'Russia2Constellation', file_name)
+            # path = f'{pathlib.Path(__file__).parent.parent}\\data\\Russia2Constellation\\{file_name}'
             with open(path) as f:
                 data = f.read()
         except FileNotFoundError:
@@ -36,7 +36,8 @@ class DataLoader:
         file_name = f'Facility-{station_name}.txt'
 
         try:
-            path = f'{pathlib.Path(__file__).parent.parent}\\data\\Facility2Constellation\\{file_name}'
+            path = os.path.join(os.getcwd(), 'data', 'Facility2Constellation', file_name)
+            # path = f'{pathlib.Path(__file__).parent.parent}\\data\\Facility2Constellation\\{file_name}'
             with open(path) as f:
                 data = f.read()
         except FileNotFoundError:
