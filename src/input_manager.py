@@ -63,6 +63,15 @@ class InputManager:
 
         res_mutex = [list(group.index) for _, group in tmp_df.groupby('data') if len(group) > 1]
         return res_mutex
+    
+    def get_capacities(self, prepared_data, kinosat_cap=10 ** 6, zorkiy_cap=0.5 * 10 ** 6):
+        res_capcity = np.zeros(len(prepared_data))
+
+        mask = prepared_data.origin.str[-4:-2].astype(int) <= 5
+        res_capcity[mask] = kinosat_cap
+        res_capcity[~mask] = zorkiy_cap
+
+        return res_capcity
 
     @measure_memory_and_time
     def load_data_for_calculation(self,
@@ -173,12 +182,19 @@ class InputManager:
         priorites[mask] = 1
         return priorites
 
+
     @measure_memory_and_time
-    def get_opportunity_memory_sizes(self, prepared_data, imaging_speed=512, dl_speed=128):
+    def get_opportunity_memory_sizes(self, prepared_data, imaging_speed=512, kinosat_dl_speed=128, zorkiy_dl_speed=32):
+
         opportunity_memory_sizes = prepared_data.duration.copy()
         mask = self.get_russia_mask(prepared_data)
         opportunity_memory_sizes[mask] *= imaging_speed
-        opportunity_memory_sizes[~mask] *= dl_speed
+
+        mask_sattelite_type = prepared_data.origin.str[-4:-2].astype(int) <= 5
+
+        opportunity_memory_sizes[(~mask) & (mask_sattelite_type)] *= kinosat_dl_speed
+        opportunity_memory_sizes[(~mask) & (~mask_sattelite_type)] *= zorkiy_dl_speed
+        
         return opportunity_memory_sizes
 
     def get_imaging_indexes(self, prepared_data):
