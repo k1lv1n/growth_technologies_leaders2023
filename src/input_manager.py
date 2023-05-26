@@ -174,14 +174,30 @@ class InputManager:
         result_df['duration'] = result_df.end_datetime - result_df.start_datetime
         return result_df
 
-    def basic_data_pipeline(self,
-                            satellites: List[str],
-                            stations: List[str],
-                            max_duration):
+    def basic_data_pipeline_all(self,
+                                satellites: List[str],
+                                stations: List[str],
+                                max_duration):
         data = self.load_data_for_calculation(satellites, stations)
         data_after_separation = self.separate_by_others(data)
         data_after_separation_no_short = data_after_separation[data_after_separation.duration > 1]
-        data_with_restrict = self.restrict_by_duration_ai(data_after_separation_no_short, max_duration)  # 20 sec
+        data_with_restrict = self.restrict_by_duration(data_after_separation_no_short, max_duration)  # 20 sec
+        return data_with_restrict.sort_values(by='start_datetime')
+
+    def basic_data_pipeline_dl(self,
+                               satellites: List[str],
+                               stations: List[str],
+                               max_duration):
+        data_loader = DataLoader()
+        data = []
+        # load data for Earth
+        for sat in satellites:
+            for station in stations:
+                earth_sat_data = data_loader.get_data_for_sat_station(sat, station, datetime_in_ms=True)
+                data.append(earth_sat_data)
+        data_after_separation = self.separate_by_others(data)
+        data_after_separation_no_short = data_after_separation[data_after_separation.duration > 1]
+        data_with_restrict = self.restrict_by_duration(data_after_separation_no_short, max_duration)  # 20 sec
         return data_with_restrict
 
     def get_russia_mask(self, prepared_data):
@@ -206,7 +222,7 @@ class InputManager:
 
         opportunity_memory_sizes[(~mask) & (mask_sattelite_type)] *= kinosat_dl_speed
         opportunity_memory_sizes[(~mask) & (~mask_sattelite_type)] *= zorkiy_dl_speed
-        
+
         return opportunity_memory_sizes
 
     def get_imaging_indexes(self, prepared_data):
