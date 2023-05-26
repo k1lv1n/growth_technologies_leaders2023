@@ -7,7 +7,7 @@ import sys
 
 sys.path.insert(1, os.path.dirname('src'))
 
-from data.satallites_groups import sat_group_8
+from data.satallites_groups import sat_group_8, sat_group_all
 from data.station_groups import russian_stations
 
 sys.path.insert(1, os.path.dirname('src'))
@@ -24,31 +24,13 @@ if __name__ == '__main__':
     dl_only = False
 
     if dl_only:
-        d = manager.basic_data_pipeline_dl([
-            'KinoSat_110101',
-            'KinoSat_110302',
-            'KinoSat_110303', 'KinoSat_110304',
-            'KinoSat_110305', 'KinoSat_110301'
-        ], [
-            'Norilsk', 'Novosib',
-            'Moscow',
-            'Murmansk1'
-        ], 50)
+        d = manager.basic_data_pipeline_dl(sat_group_all, russian_stations , 150)
     else:
-        d = manager.basic_data_pipeline_all([
-            'KinoSat_110101',
-            'KinoSat_110302',
-            'KinoSat_110303', 'KinoSat_110304',
-            'KinoSat_110305', 'KinoSat_110301'
-        ], [
-            'Norilsk', 'Novosib',
-            'Moscow',
-            'Murmansk1'
-        ], 50)
+        d = manager.basic_data_pipeline_all(sat_group_all, russian_stations , 150)
     
-    s_mutex = manager.get_mutex(d, ['KinoSat_110101'])
+    s_mutex = manager.get_mutex(d, sat_group_all)
     if dl_only:
-        s_img = None#manager.get_imaging_indexes(d)
+        s_img = None
     else:
         s_img = manager.get_imaging_indexes(d)
     s_dl = manager.get_downlink_indexes(d)
@@ -76,5 +58,5 @@ if __name__ == '__main__':
 
     # d.drop(columns='index', inplace=True)
     final = out.merge(d, how='left', left_index=True, right_index=True)
-    final.to_csv('out.csv')
+    final.to_csv('sat_group_all__russian_stations__150__all.csv')
     print('ended')
