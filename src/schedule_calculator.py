@@ -106,7 +106,7 @@ class ScheduleCalculator:
         solver.Minimize(res)
 
         # Решаем задачу
-            # solver.SetTimeLimit(10)
+        solver.SetTimeLimit(10000)
         status = solver.Solve()
 
         original_stdout = sys.stdout  # Save a reference to the original standard output

@@ -17,13 +17,14 @@ from src.input_manager import InputManager
 
 import time
 import numpy as np
+import pandas as pd
 
 if __name__ == '__main__':
     manager = InputManager()
     calculator = ScheduleCalculator()
 
     # FIXME: Вылетает на не русских станциях
-    d = manager.basic_data_pipeline(['KinoSat_110301'], ['Moscow'], 50)
+    d = manager.basic_data_pipeline(sat_all_groups, russian_stations, 50)
     
     s_mutex = manager.get_mutex(d)
     s_img = manager.get_imaging_indexes(d)
@@ -33,6 +34,15 @@ if __name__ == '__main__':
     opportunity_memory_sizes = manager.get_opportunity_memory_sizes(d)
     cap_sat_list = manager.get_capacities(d)
     priorities = manager.get_priorites(d)
+
+    pd.Series(s_mutex).to_json('s_mutex.json')
+    pd.Series(s_img).to_json('s_img.json')
+    pd.Series(s_dl).to_json('s_dl.json')
+    pd.Series(op_sat_id).to_json('op_sat_id.json')
+    pd.Series(op_sat_id_dict).to_json('op_sat_id_dict.json')
+    pd.Series(opportunity_memory_sizes).to_json('opportunity_memory_sizes.json')
+    pd.Series(cap_sat_list).to_json('cap_sat_list.json')
+    pd.Series(priorities).to_json('priorities.json')
 
     out = calculator.calculate(
         config_data=None,
@@ -53,5 +63,5 @@ if __name__ == '__main__':
     except KeyError:
         pass
     final = out.merge(d, how='left', left_index=True, right_index=True)
-    final.to_csv('out.csv')
+    final.to_csv('fin.csv')
     print('ended')

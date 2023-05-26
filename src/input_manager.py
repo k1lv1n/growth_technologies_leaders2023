@@ -153,9 +153,9 @@ class InputManager:
                             max_duration):
         data = self.load_data_for_calculation(satellites, stations)
         data_after_separation = self.separate_by_others(data)
-        # data_with_restrict = self.restrict_by_duration(data_after_separation, max_duration)
-        # data_with_restrict.drop(columns=['index'])
-        return data_after_separation
+        data_with_restrict = self.restrict_by_duration(data_after_separation, max_duration)
+        data_with_restrict.drop(columns=['index'])
+        return data_with_restrict
 
     def get_russia_mask(self, prepared_data):
         return prepared_data.index.isin(prepared_data[prepared_data['origin'].str.contains('Russia')].index)

@@ -1,0 +1,28 @@
+Start testing: May 26 18:02 MSK
+----------------------------------------------------------
+1/1 Testing: test_golomb_sat
+1/1 Test: test_golomb_sat
+Command: "/root/growth_technologies_leaders2023/cpp_src/or-tools/examples/golomb_sat/build/bin/golomb_sat"
+Directory: /root/growth_technologies_leaders2023/cpp_src/or-tools/examples/golomb_sat/build
+"test_golomb_sat" start time: May 26 18:02 MSK
+Output:
+----------------------------------------------------------
+N = 1, optimal length = 0 (conflicts:0, time=0.003241 s)
+N = 2, optimal length = 1 (conflicts:0, time=0.002108 s)
+N = 3, optimal length = 3 (conflicts:0, time=0.004861 s)
+N = 4, optimal length = 6 (conflicts:0, time=0.012146 s)
+N = 5, optimal length = 11 (conflicts:0, time=0.041096 s)
+N = 6, optimal length = 17 (conflicts:3, time=0.004392 s)
+N = 7, optimal length = 25 (conflicts:59, time=0.011777 s)
+N = 8, optimal length = 34 (conflicts:243, time=0.034762 s)
+N = 9, optimal length = 44 (conflicts:1304, time=0.173540 s)
+N = 10, optimal length = 55 (conflicts:5970, time=0.547883 s)
+<end of output>
+Test time =   0.85 sec
+----------------------------------------------------------
+Test Passed.
+"test_golomb_sat" end time: May 26 18:02 MSK
+"test_golomb_sat" time elapsed: 00:00:00
+----------------------------------------------------------
+
+End testing: May 26 18:02 MSK
