@@ -21,16 +21,18 @@ import numpy as np
 if __name__ == '__main__':
     manager = InputManager()
     calculator = ScheduleCalculator()
-    d = manager.basic_data_pipeline(
-        [
-            'KinoSat_111001', 'KinoSat_110302', 
-            'KinoSat_110303', 'KinoSat_110304', 
-            'KinoSat_110305', 'KinoSat_110301'
-        ],
-        ['Norilsk', 'Novosib', 'Moscow', 'Murmansk1'],
-        50)
+    d = manager.basic_data_pipeline_all([
+        'KinoSat_110101',
+        # 'KinoSat_110302',
+        # 'KinoSat_110303', 'KinoSat_110304',
+        # 'KinoSat_110305', 'KinoSat_110301'
+    ], [
+        # 'Norilsk', 'Novosib',
+        'Moscow',
+        # 'Murmansk1'
+    ], 50)
     
-    s_mutex = manager.get_mutex(d)
+    s_mutex = manager.get_mutex(d, ['KinoSat_110101'])
     s_img = manager.get_imaging_indexes(d)
     s_dl = manager.get_downlink_indexes(d)
     op_sat_id = manager.get_belongings(d)

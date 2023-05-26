@@ -49,7 +49,7 @@ class InputManager:
         pass
 
     @measure_memory_and_time
-    def get_mutex(self, df):
+    def get_mutex_no_russia(self, df):
         """
         Generates mutexes. Находит наличие одинаковых возможностей у разных спутников.
         :param new_table: словарь типа "имя спутника : [возможности для этого спутнкиа]"
@@ -63,7 +63,19 @@ class InputManager:
 
         res_mutex = [list(group.index) for _, group in tmp_df.groupby('data') if len(group) > 1]
         return res_mutex
-    
+
+    def get_mutex_for_sat(self, df, sat_name):
+        tmp_df = df[df['origin'].str.contains(sat_name)]
+        tmp_df['data'] = df[['start_datetime', 'end_datetime']].apply(tuple, axis=1)
+        res_mutex_for_sat = [list(group.index) for _, group in tmp_df.groupby('data') if len(group) > 1]
+        return res_mutex_for_sat
+
+    def get_mutex(self, d, satellites):
+        all_mutex = self.get_mutex_no_russia(d)
+        for s in satellites:
+            all_mutex += self.get_mutex_for_sat(d, s)
+        return all_mutex
+
     def get_capacities(self, prepared_data, kinosat_cap=10 ** 6, zorkiy_cap=0.5 * 10 ** 6):
         res_capcity = np.zeros(len(prepared_data))
 
@@ -224,9 +236,8 @@ class InputManager:
 if __name__ == "__main__":
     manager = InputManager()
 
-    d = manager.basic_data_pipeline(['KinoSat_110301', 'KinoSat_110302'],
-                                    ['Moscow'], 50)
-    # mutex = manager.get_mutex(d)
+    d = manager.basic_data_pipeline_all(['KinoSat_110301', 'KinoSat_110302'], ['Moscow'], 50)
+    mutex = manager.get_mutex(d)
     # p = manager.get_priorites(d)
     a = manager.get_belongings(d)
     b = manager.get_belongings_dict(d)
