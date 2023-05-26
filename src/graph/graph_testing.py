@@ -2,6 +2,10 @@ from itertools import combinations
 
 import networkx as nx
 import pandas as pd
+import os
+import sys
+
+sys.path.insert(1, os.path.dirname('src'))
 
 from src.input_manager import measure_memory_and_time
 
@@ -50,11 +54,7 @@ if __name__ == '__main__':
 
     manager = InputManager()
     calculator = ScheduleCalculator()
-    d = manager.basic_data_pipeline_dl(['KinoSat_110101',
-                                        # *sat_group_4,
-                                        # *sat_group_5,
-                                        # *sat_group_6
-    ], ['Moscow', 'Murmansk1'], 15000)
+    d = manager.basic_data_pipeline_imging(['KinoSat_110101',], max_duration=15000)
     print(len(d))
     m = manager.get_mutex(d, ['KinoSat_110101'])
     nodes = d.index.to_list()

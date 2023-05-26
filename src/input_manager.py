@@ -65,7 +65,7 @@ class InputManager:
         return res_mutex
 
     def get_mutex_for_sat(self, df, sat_name):
-        tmp_df = df[df['origin'].str.contains(sat_name)]
+        tmp_df = df[df['origin'].str.contains(sat_name)].copy()
         tmp_df['data'] = df[['start_datetime', 'end_datetime']].apply(tuple, axis=1)
         res_mutex_for_sat = [list(group.index) for _, group in tmp_df.groupby('data') if len(group) > 1]
         return res_mutex_for_sat
@@ -195,6 +195,20 @@ class InputManager:
             for station in stations:
                 earth_sat_data = data_loader.get_data_for_sat_station(sat, station, datetime_in_ms=True)
                 data.append(earth_sat_data)
+        data_after_separation = self.separate_by_others(data)
+        data_after_separation_no_short = data_after_separation[data_after_separation.duration > 1]
+        data_with_restrict = self.restrict_by_duration(data_after_separation_no_short, max_duration)  # 20 sec
+        return data_with_restrict
+    
+    def basic_data_pipeline_imging(self,
+                               satellites: List[str],
+                               max_duration):
+        data_loader = DataLoader()
+        data = []
+        # load data for Earth
+        for sat in satellites:
+            russia_sat_data = data_loader.get_data_for_sat_russia(sat, datetime_in_ms=True)
+            data.append(russia_sat_data)
         data_after_separation = self.separate_by_others(data)
         data_after_separation_no_short = data_after_separation[data_after_separation.duration > 1]
         data_with_restrict = self.restrict_by_duration(data_after_separation_no_short, max_duration)  # 20 sec

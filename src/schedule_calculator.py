@@ -59,6 +59,7 @@ class ScheduleCalculator:
     def calculate(
             self,
             config_data,
+            dl_only,
             num_opportunities,
             cap,
             s_mutex,
@@ -92,8 +93,9 @@ class ScheduleCalculator:
             tmp = 0
             if pr_con_id is not None:
                 tmp = y[pr_con_id]
-            if i in s_img:
-                solver.Add(y[i] == tmp + opportunity_memory_sizes[i] * x[i])
+            if not dl_only:
+                if i in s_img:
+                    solver.Add(y[i] == tmp + opportunity_memory_sizes[i] * x[i])
             if i in s_dl:
                 solver.Add(y[i] >= tmp - opportunity_memory_sizes[i] * x[i])
                 solver.Add(y[i] <= tmp)
