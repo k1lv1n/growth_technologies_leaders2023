@@ -59,6 +59,7 @@ class ScheduleCalculator:
     def calculate(
             self,
             config_data,
+            dl_only,
             num_opportunities,
             cap,
             s_mutex,
@@ -73,14 +74,16 @@ class ScheduleCalculator:
     ) -> pd.DataFrame:
         if d is None:
             d = np.ones(num_opportunities)
-        solver = pywraplp.Solver('Satellite', pywraplp.Solver.CLP_LINEAR_PROGRAMMING)  # fastest yet
+        solver = pywraplp.Solver('Satellite', pywraplp.Solver.GLOP_LINEAR_PROGRAMMING)  # fastest yet
 
+        # k = solver.SetNumThreads(8)
+        # print('Is Multiple threading: ', k)
+        # solver.EnableOutput()
 
         x = [solver.NumVar(0, 1, f'x{i}') for i in range(num_opportunities)]
         y = [solver.NumVar(0, cap[i], f'y{i}') for i in range(num_opportunities)]
 
-
-        objective = solver.Objective()
+        # objective = solver.Objective()
 
         for el in s_mutex:
             for l, r in self.__get_pairs(el):
@@ -92,8 +95,9 @@ class ScheduleCalculator:
             tmp = 0
             if pr_con_id is not None:
                 tmp = y[pr_con_id]
-            if i in s_img:
-                solver.Add(y[i] == tmp + opportunity_memory_sizes[i] * x[i])
+            if not dl_only:
+                if i in s_img:
+                    solver.Add(y[i] == tmp + opportunity_memory_sizes[i] * x[i])
             if i in s_dl:
                 solver.Add(y[i] >= tmp - opportunity_memory_sizes[i] * x[i])
                 solver.Add(y[i] <= tmp)
@@ -103,13 +107,16 @@ class ScheduleCalculator:
             res -= x[i] * priorities[i]
             for k in self.__cond_for_moment_i(i, op_sat_id_dict).values():
                 res += y[k] * alpha * d[k]
-        solver.Minimize(res)
 
+        solver.Minimize(res)
+        # for i in s_img:
+        hint = np.ones_like(s_img)
+        # solver.SetHint(x, hint)
         # Решаем задачу
-            # solver.SetTimeLimit(10)
+        # solver.SetTimeLimit(10)
         status = solver.Solve()
 
-        original_stdout = sys.stdout  # Save a reference to the original standard output
+        # original_stdout = sys.stdout  # Save a reference to the original standard output
         # with open('out.txt', 'w') as f:
         #     sys.stdout = f  # Change the standard output to the file we created.
         #     print(f'{solver.wall_time()} ms')
@@ -119,7 +126,6 @@ class ScheduleCalculator:
         #         print('Решение найдено')
         #         print(f'Сумма приоритетов: {objective.Value()}')
         #         for i in range(num_opportunities):
-        #             print(i, op_sat_id[i], i in op_sat_id_dict['KinoSat_110301'], i in op_sat_id_dict['KinoSat_110302'])
         #             s = sum([round(y[k].solution_value()) for k in
         #                      self.__cond_for_moment_i(i, op_sat_id_dict).values()])
         #             print(

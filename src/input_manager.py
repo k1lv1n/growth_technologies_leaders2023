@@ -7,6 +7,7 @@ from typing import List
 
 import numpy as np
 import pandas as pd
+# from alive_progress import alive_bar
 
 from src.data_loader import DataLoader
 
@@ -30,26 +31,8 @@ class InputManager:
     def __init__(self):
         pass
 
-    def read_data(self) -> pd.DataFrame:
-        """
-        Прочитать файл/архив и вернуть
-        :return:
-        """
-        pass
-
-    def read_config(self, config) -> dict:
-        """
-        Считать информацию о конфигурации расчета (что учитываем и с какими весами)
-        :param config:
-        :return:
-        """
-        pass
-
-    def prepare_data(self):
-        pass
-
     @measure_memory_and_time
-    def get_mutex(self, df):
+    def get_mutex_no_russia(self, df):
         """
         Generates mutexes. Находит наличие одинаковых возможностей у разных спутников.
         :param new_table: словарь типа "имя спутника : [возможности для этого спутнкиа]"
@@ -63,7 +46,23 @@ class InputManager:
 
         res_mutex = [list(group.index) for _, group in tmp_df.groupby('data') if len(group) > 1]
         return res_mutex
-    
+
+    @measure_memory_and_time
+    def get_mutex_for_sat(self, df, sat_name):
+        tmp_df = df[df['origin'].str[-len(sat_name):] == sat_name].copy()
+        tmp_df['data'] = df[['start_datetime', 'end_datetime']].apply(tuple, axis=1)
+        res_mutex_for_sat = [list(group.index) for _, group in tmp_df.groupby('data') if len(group) > 1]
+        return res_mutex_for_sat
+
+    @measure_memory_and_time
+    def get_mutex(self, d, satellites):
+        all_mutex = self.get_mutex_no_russia(d)
+        # with alive_bar(len(satellites), bar='halloween') as bar:
+        for s in satellites:
+            all_mutex += self.get_mutex_for_sat(d, s)
+            # bar()
+        return all_mutex
+
     def get_capacities(self, prepared_data, kinosat_cap=10 ** 6, zorkiy_cap=0.5 * 10 ** 6):
         res_capcity = np.zeros(len(prepared_data))
 
@@ -91,6 +90,18 @@ class InputManager:
         return result_dict
 
     @measure_memory_and_time
+    def load_data_for_calculation_dl(self, satellites: List[str], stations: List[str]):
+        data_loader = DataLoader()
+        data = []
+        # load data for Earth
+        for sat in satellites:
+            for station in stations:
+                earth_sat_data = data_loader.get_data_for_sat_station(sat, station, datetime_in_ms=True)
+                data.append(earth_sat_data)
+
+        return data
+
+    @measure_memory_and_time
     def restrict_by_duration(self, df, max_duration):
         df_list = []
         for _, row in df.iterrows():
@@ -104,7 +115,7 @@ class InputManager:
                     new_row['duration'] = min(max_duration, row['duration'] - i * max_duration)
                     new_row['end_datetime'] = new_row['start_datetime'] + new_row['duration']
                     df_list.append(new_row)
-        res_df = pd.DataFrame(df_list).reset_index()
+        res_df = pd.DataFrame(df_list)
 
         return res_df
 
@@ -162,18 +173,52 @@ class InputManager:
         result_df['duration'] = result_df.end_datetime - result_df.start_datetime
         return result_df
 
-    def basic_data_pipeline(self,
-                            satellites: List[str],
-                            stations: List[str],
-                            max_duration):
+    def basic_data_pipeline_all(self,
+                                satellites: List[str],
+                                stations: List[str],
+                                max_duration):
         data = self.load_data_for_calculation(satellites, stations)
         data_after_separation = self.separate_by_others(data)
         data_after_separation_no_short = data_after_separation[data_after_separation.duration > 1]
-        data_with_restrict = self.restrict_by_duration_ai(data_after_separation_no_short, max_duration)  # 20 sec
-        return data_with_restrict
+        data_with_restrict = self.restrict_by_duration(data_after_separation_no_short, max_duration)  # 20 sec
+        return data_with_restrict.reset_index().sort_index()
+
+    def basic_data_pipeline_dl(self,
+                               satellites: List[str],
+                               stations: List[str],
+                               max_duration):
+        data = self.load_data_for_calculation_dl(satellites, stations)
+        data_after_separation = self.separate_by_others(data)
+        data_after_separation_no_short = data_after_separation[data_after_separation.duration > 1]
+        if max_duration:
+            data_with_restrict = self.restrict_by_duration(data_after_separation_no_short, max_duration)  # 20 sec
+            return data_with_restrict.sort_index()
+        else:
+            return data_after_separation_no_short.sort_index()
+
+    @measure_memory_and_time
+    def partition_data_by_modeling_interval(self, modeling_start, modeling_end, prepared_data):
+        ts, te = modeling_start.timestamp(), modeling_end.timestamp()
+
+        return prepared_data[(prepared_data.start_datetime >= ts) & (prepared_data.end_datetime <= te)]
+
+    def basic_data_pipeline_imging(self,
+                                   satellites: List[str],
+                                   max_duration):
+        data_loader = DataLoader()
+        data = []
+        # load data for Earth
+        for sat in satellites:
+            russia_sat_data = data_loader.get_data_for_sat_russia(sat, datetime_in_ms=True)
+            data.append(russia_sat_data)
+        data_after_separation = self.separate_by_others(data)
+        data_after_separation_no_short = data_after_separation[data_after_separation.duration > 1]
+        data_with_restrict = self.restrict_by_duration(data_after_separation_no_short, max_duration)  # 20 sec
+        return data_with_restrict.sort_index()
 
     def get_russia_mask(self, prepared_data):
-        return prepared_data.index.isin(prepared_data[prepared_data['origin'].str.contains('Russia')].index)
+        return prepared_data['origin'].str.contains('Russia')
+        # return prepared_data.index.isin(prepared_data[prepared_data['origin'].str.contains('Russia')].index)
 
     @measure_memory_and_time
     def get_priorites(self, prepared_data):
@@ -181,7 +226,6 @@ class InputManager:
         mask = self.get_russia_mask(prepared_data)
         priorites[mask] = 1
         return priorites
-
 
     @measure_memory_and_time
     def get_opportunity_memory_sizes(self, prepared_data, imaging_speed=512, kinosat_dl_speed=128, zorkiy_dl_speed=32):
@@ -194,7 +238,7 @@ class InputManager:
 
         opportunity_memory_sizes[(~mask) & (mask_sattelite_type)] *= kinosat_dl_speed
         opportunity_memory_sizes[(~mask) & (~mask_sattelite_type)] *= zorkiy_dl_speed
-        
+
         return opportunity_memory_sizes
 
     def get_imaging_indexes(self, prepared_data):
@@ -224,8 +268,7 @@ class InputManager:
 if __name__ == "__main__":
     manager = InputManager()
 
-    d = manager.basic_data_pipeline(['KinoSat_110301', 'KinoSat_110302'],
-                                    ['Moscow'], 50)
+    d = manager.basic_data_pipeline_all(['KinoSat_110301'], ['Moscow'], 50)
     # mutex = manager.get_mutex(d)
     # p = manager.get_priorites(d)
     a = manager.get_belongings(d)
