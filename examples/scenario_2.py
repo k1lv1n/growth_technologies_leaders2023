@@ -64,7 +64,7 @@ if __name__ == '__main__':
         priorities=priorities,
     )
 
-    # d.drop(columns='index', inplace=True)
+    d_part.drop(columns='index', inplace=True)
     
     final = out.merge(d_part, how='left', left_index=True, right_index=True)
     final.to_csv('KinoSat_110101__russian_stations__500__24H.csv')
