@@ -5,7 +5,7 @@
 import os
 import sys
 
-sys.path.insert(1, os.path.dirname('src'))
+sys.path.insert(1, os.path.dirname('data'))
 
 from data.satallites_groups import sat_group_8, sat_group_9, sat_group_10, sat_group_all
 from data.station_groups import russian_stations
@@ -21,18 +21,18 @@ import numpy as np
 if __name__ == '__main__':
     manager = InputManager()
     calculator = ScheduleCalculator()
-    dl_only = True
+    dl_only = False
 
-    sat_group = sat_group_9
+    sat_group = ['KinoSat_110508',]
 
     if dl_only:
         d = manager.basic_data_pipeline_dl(sat_group,  russian_stations, 500)
     else:
-        d = manager.basic_data_pipeline_all(sat_group_all, russian_stations , 150)
+        d = manager.basic_data_pipeline_all(sat_group, russian_stations , 500)
     
     # d_part = manager.partition_data_by_modeling_interval(24, d)
     
-    s_mutex = manager.get_mutex(d_part, sat_group)
+    s_mutex = manager.get_mutex(d, sat_group)
 
     if dl_only:
         s_img = None
@@ -65,5 +65,5 @@ if __name__ == '__main__':
     # d.drop(columns='index', inplace=True)
     
     final = out.merge(d, how='left', left_index=True, right_index=True)
-    final.to_csv('sat_group_9__russian_stations__50__Sdl_only.csv')
+    final.to_csv('KinoSat_110508__russian_stations__500__Sdl_only.csv')
     print('ended')

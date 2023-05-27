@@ -5,7 +5,7 @@
 import os
 import sys
 
-sys.path.insert(1, os.path.dirname('src'))
+sys.path.insert(1, os.path.dirname('data'))
 
 from data.satallites_groups import sat_group_8, sat_group_9, sat_group_10, sat_group_all
 from data.station_groups import russian_stations
@@ -23,8 +23,8 @@ if __name__ == '__main__':
     calculator = ScheduleCalculator()
 
     dl_only = False
-    sat_group = sat_group_9
-    partition_restrict = 500
+    sat_group = ['KinoSat_110101',]
+    partition_restrict = 50
     modeling_interval_in_hours = 24
 
     if dl_only:
@@ -67,5 +67,5 @@ if __name__ == '__main__':
     # d.drop(columns='index', inplace=True)
     
     final = out.merge(d_part, how='left', left_index=True, right_index=True)
-    final.to_csv('sat_group_9__russian_stations__500__Sdl_only_24H.csv')
+    final.to_csv('KinoSat_110101__russian_stations__500__24H.csv')
     print('ended')
