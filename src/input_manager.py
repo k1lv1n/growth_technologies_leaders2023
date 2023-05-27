@@ -243,7 +243,8 @@ class InputManager:
         return data_with_restrict.sort_values(by='start_datetime')
 
     def get_russia_mask(self, prepared_data):
-        return prepared_data.index.isin(prepared_data[prepared_data['origin'].str.contains('Russia')].index)
+        return prepared_data['origin'].str.contains('Russia')
+        # return prepared_data.index.isin(prepared_data[prepared_data['origin'].str.contains('Russia')].index)
 
     @measure_memory_and_time
     def get_priorites(self, prepared_data):
@@ -268,12 +269,14 @@ class InputManager:
         return opportunity_memory_sizes
 
     def get_imaging_indexes(self, prepared_data):
-        mask = self.get_russia_mask(prepared_data)
-        return np.where(mask)[0]
+        return np.where(prepared_data['origin'].str.contains('Russia'))[0]
+        # mask = self.get_russia_mask(prepared_data)
+        # return np.where(mask)[0]
 
     def get_downlink_indexes(self, prepared_data):
-        mask = self.get_russia_mask(prepared_data)
-        return np.where(~mask)[0]
+        return np.where(~prepared_data['origin'].str.contains('Russia'))[0]
+        # mask = self.get_russia_mask(prepared_data)
+        # return np.where(~mask)[0]
 
     @measure_memory_and_time
     def get_belongings(self, prepared_data):

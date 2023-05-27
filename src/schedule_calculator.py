@@ -76,9 +76,9 @@ class ScheduleCalculator:
             d = np.ones(num_opportunities)
         solver = pywraplp.Solver('Satellite', pywraplp.Solver.CLP_LINEAR_PROGRAMMING)  # fastest yet
 
-        k = solver.SetNumThreads(8)
-        print('Is Multiple threading: ', k)
-        solver.EnableOutput()
+        # k = solver.SetNumThreads(8)
+        # print('Is Multiple threading: ', k)
+        # solver.EnableOutput()
 
 
         x = [solver.NumVar(0, 1, f'x{i}') for i in range(num_opportunities)]
