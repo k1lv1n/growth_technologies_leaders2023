@@ -23,15 +23,15 @@ if __name__ == '__main__':
     calculator = ScheduleCalculator()
     dl_only = False
 
-    sat_group = ['KinoSat_110508',]
+    sat_group = ['KinoSat_110508', ]
 
     if dl_only:
-        d = manager.basic_data_pipeline_dl(sat_group,  russian_stations, 500)
+        d = manager.basic_data_pipeline_dl(sat_group, russian_stations, 500)
     else:
-        d = manager.basic_data_pipeline_all(sat_group, russian_stations , 500)
-    
+        d = manager.basic_data_pipeline_all(sat_group, russian_stations, 500)
+
     # d_part = manager.partition_data_by_modeling_interval(24, d)
-    
+
     s_mutex = manager.get_mutex(d, sat_group)
 
     if dl_only:
@@ -63,7 +63,7 @@ if __name__ == '__main__':
     )
 
     # d.drop(columns='index', inplace=True)
-    
+
     final = out.merge(d, how='left', left_index=True, right_index=True)
     final.to_csv('123.csv')
     print('ended')

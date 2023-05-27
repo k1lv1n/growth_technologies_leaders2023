@@ -1,13 +1,13 @@
 '''
 Проверка мутека, 3 разные групировки
 '''
-
+import datetime
 import os
 import sys
 
 sys.path.insert(1, os.path.dirname('data'))
 
-from data.satallites_groups import sat_group_8, sat_group_9, sat_group_10, sat_group_all
+from data.satallites_groups import *
 from data.station_groups import russian_stations
 
 sys.path.insert(1, os.path.dirname('src'))
@@ -23,17 +23,26 @@ if __name__ == '__main__':
     calculator = ScheduleCalculator()
 
     dl_only = False
-    sat_group = ['KinoSat_110101',]
+    sat_group = [
+        *sat_group_all
+        # * sat_group_3,
+        # * sat_group_3,
+    ]
+    stations = russian_stations
     partition_restrict = 500
-    modeling_interval_in_hours = 24
+    modeling_start_datetime = datetime.datetime(2027, 6, 1, 0)
+    modeling_end_datetime = datetime.datetime(2027, 6, 1, 12)
+    out_name = f'{len(sat_group)}_sats_{len(stations)}_stats_{modeling_start_datetime.date()}_start_{modeling_end_datetime.date()}_end'
+    print(modeling_end_datetime - modeling_start_datetime)
+    # modeling_interval_in_hours = 24
 
     if dl_only:
-        d = manager.basic_data_pipeline_dl(sat_group,  russian_stations, partition_restrict)
+        d = manager.basic_data_pipeline_dl(sat_group, stations, partition_restrict)
     else:
-        d = manager.basic_data_pipeline_all(sat_group, russian_stations , partition_restrict)
-    
-    d_part = manager.partition_data_by_modeling_interval(modeling_interval_in_hours, d)
-    
+        d = manager.basic_data_pipeline_all(sat_group, stations, partition_restrict)
+
+    d_part = manager.partition_data_by_modeling_interval(modeling_start_datetime, modeling_end_datetime, d)
+
     s_mutex = manager.get_mutex(d_part, sat_group)
 
     if dl_only:
@@ -59,13 +68,13 @@ if __name__ == '__main__':
         op_sat_id=op_sat_id,
         op_sat_id_dict=op_sat_id_dict,
         opportunity_memory_sizes=opportunity_memory_sizes,
-        alpha=1e-5,
+        alpha=1e-7,
         d=np.ones(len(d_part)),
         priorities=priorities,
     )
 
     d_part.drop(columns='index', inplace=True)
-    
+
     final = out.merge(d_part, how='left', left_index=True, right_index=True)
-    final.to_csv('KinoSat_110101__russian_stations__500__24H.csv')
+    final.to_csv(f'{out_name}.csv')
     print('ended')
