@@ -115,7 +115,7 @@ class InputManager:
                     new_row['duration'] = min(max_duration, row['duration'] - i * max_duration)
                     new_row['end_datetime'] = new_row['start_datetime'] + new_row['duration']
                     df_list.append(new_row)
-        res_df = pd.DataFrame(df_list).reset_index()
+        res_df = pd.DataFrame(df_list)
 
         return res_df
 
@@ -181,7 +181,7 @@ class InputManager:
         data_after_separation = self.separate_by_others(data)
         data_after_separation_no_short = data_after_separation[data_after_separation.duration > 1]
         data_with_restrict = self.restrict_by_duration(data_after_separation_no_short, max_duration)  # 20 sec
-        return data_with_restrict.sort_index()
+        return data_with_restrict.reset_index().sort_index()
 
     def basic_data_pipeline_dl(self,
                                satellites: List[str],
@@ -197,18 +197,11 @@ class InputManager:
             return data_after_separation_no_short.sort_index()
 
     @measure_memory_and_time
-    def partition_data_by_modeling_interval(self, modeling_interval, prepared_data):
-        modeling_interval *= 60 * 60
-        start_timestamp = prepared_data.iloc[0]['start_datetime']
-        max_idex = 0
-        for index, row in prepared_data.iterrows():
-            if row['end_datetime'] -  start_timestamp >= modeling_interval:
-                max_idex = index
-                break
-        
-        return prepared_data[0:max_idex]
-        
-    
+    def partition_data_by_modeling_interval(self, modeling_start, modeling_end, prepared_data):
+        ts, te = modeling_start.timestamp(), modeling_end.timestamp()
+
+        return prepared_data[(prepared_data.start_datetime >= ts) & (prepared_data.end_datetime <= te)]
+
     def basic_data_pipeline_imging(self,
                                    satellites: List[str],
                                    max_duration):
