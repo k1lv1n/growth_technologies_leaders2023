@@ -7,6 +7,8 @@ from typing import List
 
 import numpy as np
 import pandas as pd
+from alive_progress import alive_bar
+
 
 from src.data_loader import DataLoader
 
@@ -64,16 +66,20 @@ class InputManager:
         res_mutex = [list(group.index) for _, group in tmp_df.groupby('data') if len(group) > 1]
         return res_mutex
 
+    @measure_memory_and_time
     def get_mutex_for_sat(self, df, sat_name):
-        tmp_df = df[df['origin'].str.contains(sat_name)].copy()
+        tmp_df = df[df['origin'].str[-len(sat_name):] == sat_name].copy()
         tmp_df['data'] = df[['start_datetime', 'end_datetime']].apply(tuple, axis=1)
         res_mutex_for_sat = [list(group.index) for _, group in tmp_df.groupby('data') if len(group) > 1]
         return res_mutex_for_sat
-
+    
+    @measure_memory_and_time
     def get_mutex(self, d, satellites):
         all_mutex = self.get_mutex_no_russia(d)
-        for s in satellites:
-            all_mutex += self.get_mutex_for_sat(d, s)
+        with alive_bar(len(satellites), bar='halloween') as bar:
+            for s in satellites:
+                all_mutex += self.get_mutex_for_sat(d, s)
+                bar()
         return all_mutex
 
     def get_capacities(self, prepared_data, kinosat_cap=10 ** 6, zorkiy_cap=0.5 * 10 ** 6):
@@ -101,6 +107,18 @@ class InputManager:
                 station_sat_data = data_loader.get_data_for_sat_station(sat, station, datetime_in_ms=True)
                 result_dict.append(station_sat_data)
         return result_dict
+    
+    @measure_memory_and_time
+    def load_data_for_calculation_dl(self, satellites: List[str], stations: List[str]):
+        data_loader = DataLoader()
+        data = []
+        # load data for Earth
+        for sat in satellites:
+            for station in stations:
+                earth_sat_data = data_loader.get_data_for_sat_station(sat, station, datetime_in_ms=True)
+                data.append(earth_sat_data)
+
+        return data
 
     @measure_memory_and_time
     def restrict_by_duration(self, df, max_duration):
@@ -188,17 +206,27 @@ class InputManager:
                                satellites: List[str],
                                stations: List[str],
                                max_duration):
-        data_loader = DataLoader()
-        data = []
-        # load data for Earth
-        for sat in satellites:
-            for station in stations:
-                earth_sat_data = data_loader.get_data_for_sat_station(sat, station, datetime_in_ms=True)
-                data.append(earth_sat_data)
+        data = self.load_data_for_calculation_dl(satellites, stations)
         data_after_separation = self.separate_by_others(data)
         data_after_separation_no_short = data_after_separation[data_after_separation.duration > 1]
-        data_with_restrict = self.restrict_by_duration(data_after_separation_no_short, max_duration)  # 20 sec
-        return data_with_restrict
+        if max_duration:
+            data_with_restrict = self.restrict_by_duration(data_after_separation_no_short, max_duration)  # 20 sec
+            return data_with_restrict.sort_values(by='start_datetime')
+        else:
+            return data_after_separation_no_short.sort_values(by='start_datetime')
+    
+    @measure_memory_and_time
+    def partition_data_by_modeling_interval(self, modeling_interval, prepared_data):
+        modeling_interval *= 60 * 60
+        start_timestamp = prepared_data.iloc[0]['start_datetime']
+        max_idex = 0
+        for index, row in prepared_data.iterrows():
+            if row['end_datetime'] -  start_timestamp >= modeling_interval:
+                max_idex = index
+                break
+        
+        return prepared_data[0:max_idex]
+        
     
     def basic_data_pipeline_imging(self,
                                satellites: List[str],
@@ -212,7 +240,7 @@ class InputManager:
         data_after_separation = self.separate_by_others(data)
         data_after_separation_no_short = data_after_separation[data_after_separation.duration > 1]
         data_with_restrict = self.restrict_by_duration(data_after_separation_no_short, max_duration)  # 20 sec
-        return data_with_restrict
+        return data_with_restrict.sort_values(by='start_datetime')
 
     def get_russia_mask(self, prepared_data):
         return prepared_data.index.isin(prepared_data[prepared_data['origin'].str.contains('Russia')].index)

@@ -25,8 +25,8 @@ class DataLoader:
         else:
             file_name = f'Russia-To-Satellite-SatPlanes_6_20.txt'
         try:
-            # path = os.path.join(os.getcwd(), 'data', 'Russia2Constellation', file_name)
-            path = f'{pathlib.Path(__file__).parent.parent}\\data\\Russia2Constellation\\{file_name}'
+            path = os.path.join(pathlib.Path(__file__).parent.parent, 'data', 'Russia2Constellation', file_name)
+            # path = f'{pathlib.Path(__file__).parent.parent}\\data\\Russia2Constellation\\{file_name}'
             with open(path) as f:
                 data = f.read()
         except FileNotFoundError:
@@ -39,8 +39,8 @@ class DataLoader:
         file_name = f'Facility-{station_name}.txt'
 
         try:
-            # path = os.path.join(os.getcwd(), 'data', 'Facility2Constellation', file_name)
-            path = f'{pathlib.Path(__file__).parent.parent}\\data\\Facility2Constellation\\{file_name}'
+            path = os.path.join(pathlib.Path(__file__).parent.parent, 'data', 'Facility2Constellation', file_name)
+            # path = f'{pathlib.Path(__file__).parent.parent}\\data\\Facility2Constellation\\{file_name}'
             with open(path) as f:
                 data = f.read()
         except FileNotFoundError:

@@ -76,6 +76,10 @@ class ScheduleCalculator:
             d = np.ones(num_opportunities)
         solver = pywraplp.Solver('Satellite', pywraplp.Solver.CLP_LINEAR_PROGRAMMING)  # fastest yet
 
+        k = solver.SetNumThreads(8)
+        print('Is Multiple threading: ', k)
+        solver.EnableOutput()
+
 
         x = [solver.NumVar(0, 1, f'x{i}') for i in range(num_opportunities)]
         y = [solver.NumVar(0, cap[i], f'y{i}') for i in range(num_opportunities)]
@@ -111,7 +115,7 @@ class ScheduleCalculator:
             # solver.SetTimeLimit(10)
         status = solver.Solve()
 
-        original_stdout = sys.stdout  # Save a reference to the original standard output
+        # original_stdout = sys.stdout  # Save a reference to the original standard output
         # with open('out.txt', 'w') as f:
         #     sys.stdout = f  # Change the standard output to the file we created.
         #     print(f'{solver.wall_time()} ms')

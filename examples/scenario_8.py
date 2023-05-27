@@ -7,7 +7,7 @@ import sys
 
 sys.path.insert(1, os.path.dirname('src'))
 
-from data.satallites_groups import sat_group_8, sat_group_all
+from data.satallites_groups import sat_group_8, sat_group_9, sat_group_10, sat_group_all
 from data.station_groups import russian_stations
 
 sys.path.insert(1, os.path.dirname('src'))
@@ -21,18 +21,24 @@ import numpy as np
 if __name__ == '__main__':
     manager = InputManager()
     calculator = ScheduleCalculator()
-    dl_only = False
+    dl_only = True
+
+    sat_group = sat_group_9
 
     if dl_only:
-        d = manager.basic_data_pipeline_dl(sat_group_all, russian_stations , 150)
+        d = manager.basic_data_pipeline_dl(sat_group,  russian_stations, 500)
     else:
         d = manager.basic_data_pipeline_all(sat_group_all, russian_stations , 150)
     
-    s_mutex = manager.get_mutex(d, sat_group_all)
+    # d_part = manager.partition_data_by_modeling_interval(24, d)
+    
+    s_mutex = manager.get_mutex(d_part, sat_group)
+
     if dl_only:
         s_img = None
     else:
         s_img = manager.get_imaging_indexes(d)
+
     s_dl = manager.get_downlink_indexes(d)
     op_sat_id = manager.get_belongings(d)
     op_sat_id_dict = manager.get_belongings_dict(d)
@@ -57,6 +63,7 @@ if __name__ == '__main__':
     )
 
     # d.drop(columns='index', inplace=True)
+    
     final = out.merge(d, how='left', left_index=True, right_index=True)
-    final.to_csv('sat_group_all__russian_stations__150__all.csv')
+    final.to_csv('sat_group_9__russian_stations__50__Sdl_only.csv')
     print('ended')
