@@ -24,7 +24,7 @@ if __name__ == '__main__':
 
     dl_only = False
     sat_group = ['KinoSat_110101',]
-    partition_restrict = 50
+    partition_restrict = 500
     modeling_interval_in_hours = 24
 
     if dl_only:

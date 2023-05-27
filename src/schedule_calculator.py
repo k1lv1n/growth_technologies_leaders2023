@@ -115,23 +115,23 @@ class ScheduleCalculator:
             # solver.SetTimeLimit(10)
         status = solver.Solve()
 
-        original_stdout = sys.stdout  # Save a reference to the original standard output
-        with open('out.txt', 'w') as f:
-            sys.stdout = f  # Change the standard output to the file we created.
-            print(f'{solver.wall_time()} ms')
+        # original_stdout = sys.stdout  # Save a reference to the original standard output
+        # with open('out.txt', 'w') as f:
+        #     sys.stdout = f  # Change the standard output to the file we created.
+        #     print(f'{solver.wall_time()} ms')
 
-            # Выводим результаты
-            if status == pywraplp.Solver.OPTIMAL:
-                print('Решение найдено')
-                print(f'Сумма приоритетов: {objective.Value()}')
-                for i in range(num_opportunities):
-                    s = sum([round(y[k].solution_value()) for k in
-                             self.__cond_for_moment_i(i, op_sat_id_dict).values()])
-                    print(
-                        f'x{i}: {x[i].solution_value()}, {[round(y[k].solution_value()) for k in self.__cond_for_moment_i(i, op_sat_id_dict).values()]}, {op_sat_id[i]} , {self.__cond_for_moment_i(i, op_sat_id_dict)}')
-            else:
-                print('Решение не найдено')
-            sys.stdout = original_stdout
+        #     # Выводим результаты
+        #     if status == pywraplp.Solver.OPTIMAL:
+        #         print('Решение найдено')
+        #         print(f'Сумма приоритетов: {objective.Value()}')
+        #         for i in range(num_opportunities):
+        #             s = sum([round(y[k].solution_value()) for k in
+        #                      self.__cond_for_moment_i(i, op_sat_id_dict).values()])
+        #             print(
+        #                 f'x{i}: {x[i].solution_value()}, {[round(y[k].solution_value()) for k in self.__cond_for_moment_i(i, op_sat_id_dict).values()]}, {op_sat_id[i]} , {self.__cond_for_moment_i(i, op_sat_id_dict)}')
+        #     else:
+        #         print('Решение не найдено')
+        #     sys.stdout = original_stdout
 
         transfered_data = []
         s_prev = 0

@@ -65,5 +65,5 @@ if __name__ == '__main__':
     # d.drop(columns='index', inplace=True)
     
     final = out.merge(d, how='left', left_index=True, right_index=True)
-    final.to_csv('KinoSat_110508__russian_stations__500__Sdl_only.csv')
+    final.to_csv('123.csv')
     print('ended')

@@ -3,7 +3,7 @@ import pandas as pd
 import os
 import pprint
 
-out_filename = 'KinoSat_110508__russian_stations__500__Sdl_only.csv'
+out_filename = 'KinoSat_110101__russian_stations__50__24H.csv'
 
 class TestInfoConservation:
     def test_total_summ_data(self, out_file_path=os.path.join(os.path.dirname(os.getcwd()), out_filename)):

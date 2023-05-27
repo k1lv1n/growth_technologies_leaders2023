@@ -200,7 +200,7 @@ class InputManager:
         data_after_separation = self.separate_by_others(data)
         data_after_separation_no_short = data_after_separation[data_after_separation.duration > 1]
         data_with_restrict = self.restrict_by_duration(data_after_separation_no_short, max_duration)  # 20 sec
-        return data_with_restrict.sort_values(by='start_datetime')
+        return data_with_restrict.sort_index()
 
     def basic_data_pipeline_dl(self,
                                satellites: List[str],
@@ -211,9 +211,9 @@ class InputManager:
         data_after_separation_no_short = data_after_separation[data_after_separation.duration > 1]
         if max_duration:
             data_with_restrict = self.restrict_by_duration(data_after_separation_no_short, max_duration)  # 20 sec
-            return data_with_restrict.sort_values(by='start_datetime')
+            return data_with_restrict.sort_index()
         else:
-            return data_after_separation_no_short.sort_values(by='start_datetime')
+            return data_after_separation_no_short.sort_index()
     
     @measure_memory_and_time
     def partition_data_by_modeling_interval(self, modeling_interval, prepared_data):
@@ -240,7 +240,7 @@ class InputManager:
         data_after_separation = self.separate_by_others(data)
         data_after_separation_no_short = data_after_separation[data_after_separation.duration > 1]
         data_with_restrict = self.restrict_by_duration(data_after_separation_no_short, max_duration)  # 20 sec
-        return data_with_restrict.sort_values(by='start_datetime')
+        return data_with_restrict.sort_index()
 
     def get_russia_mask(self, prepared_data):
         return prepared_data['origin'].str.contains('Russia')
