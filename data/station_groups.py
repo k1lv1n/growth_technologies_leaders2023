@@ -9,4 +9,4 @@ russian_stations = ['Anadyr2',
                     'Norilsk',
                     'Novosib']
 
-foreign_stations = ['Cape_Town', 'Dehli', 'RioGallegos']
+foreign_stations = ['CapeTown', 'Delhi', 'RioGallegos', 'Sumatra']
