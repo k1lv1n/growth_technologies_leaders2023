@@ -7,8 +7,7 @@ from typing import List
 
 import numpy as np
 import pandas as pd
-from alive_progress import alive_bar
-
+# from alive_progress import alive_bar
 
 from src.data_loader import DataLoader
 
@@ -30,24 +29,6 @@ def measure_memory_and_time(func):
 class InputManager:
 
     def __init__(self):
-        pass
-
-    def read_data(self) -> pd.DataFrame:
-        """
-        Прочитать файл/архив и вернуть
-        :return:
-        """
-        pass
-
-    def read_config(self, config) -> dict:
-        """
-        Считать информацию о конфигурации расчета (что учитываем и с какими весами)
-        :param config:
-        :return:
-        """
-        pass
-
-    def prepare_data(self):
         pass
 
     @measure_memory_and_time
@@ -72,14 +53,14 @@ class InputManager:
         tmp_df['data'] = df[['start_datetime', 'end_datetime']].apply(tuple, axis=1)
         res_mutex_for_sat = [list(group.index) for _, group in tmp_df.groupby('data') if len(group) > 1]
         return res_mutex_for_sat
-    
+
     @measure_memory_and_time
     def get_mutex(self, d, satellites):
         all_mutex = self.get_mutex_no_russia(d)
-        with alive_bar(len(satellites), bar='halloween') as bar:
-            for s in satellites:
-                all_mutex += self.get_mutex_for_sat(d, s)
-                bar()
+        # with alive_bar(len(satellites), bar='halloween') as bar:
+        for s in satellites:
+            all_mutex += self.get_mutex_for_sat(d, s)
+            # bar()
         return all_mutex
 
     def get_capacities(self, prepared_data, kinosat_cap=10 ** 6, zorkiy_cap=0.5 * 10 ** 6):
@@ -107,7 +88,7 @@ class InputManager:
                 station_sat_data = data_loader.get_data_for_sat_station(sat, station, datetime_in_ms=True)
                 result_dict.append(station_sat_data)
         return result_dict
-    
+
     @measure_memory_and_time
     def load_data_for_calculation_dl(self, satellites: List[str], stations: List[str]):
         data_loader = DataLoader()
@@ -214,7 +195,7 @@ class InputManager:
             return data_with_restrict.sort_index()
         else:
             return data_after_separation_no_short.sort_index()
-    
+
     @measure_memory_and_time
     def partition_data_by_modeling_interval(self, modeling_interval, prepared_data):
         modeling_interval *= 60 * 60
@@ -229,8 +210,8 @@ class InputManager:
         
     
     def basic_data_pipeline_imging(self,
-                               satellites: List[str],
-                               max_duration):
+                                   satellites: List[str],
+                                   max_duration):
         data_loader = DataLoader()
         data = []
         # load data for Earth
@@ -253,7 +234,6 @@ class InputManager:
         priorites[mask] = 1
         return priorites
 
-
     @measure_memory_and_time
     def get_opportunity_memory_sizes(self, prepared_data, imaging_speed=512, kinosat_dl_speed=128, zorkiy_dl_speed=32):
 
@@ -269,14 +249,12 @@ class InputManager:
         return opportunity_memory_sizes
 
     def get_imaging_indexes(self, prepared_data):
-        return np.where(prepared_data['origin'].str.contains('Russia'))[0]
-        # mask = self.get_russia_mask(prepared_data)
-        # return np.where(mask)[0]
+        mask = self.get_russia_mask(prepared_data)
+        return np.where(mask)[0]
 
     def get_downlink_indexes(self, prepared_data):
-        return np.where(~prepared_data['origin'].str.contains('Russia'))[0]
-        # mask = self.get_russia_mask(prepared_data)
-        # return np.where(~mask)[0]
+        mask = self.get_russia_mask(prepared_data)
+        return np.where(~mask)[0]
 
     @measure_memory_and_time
     def get_belongings(self, prepared_data):
@@ -297,8 +275,8 @@ class InputManager:
 if __name__ == "__main__":
     manager = InputManager()
 
-    d = manager.basic_data_pipeline_all(['KinoSat_110301', 'KinoSat_110302'], ['Moscow'], 50)
-    mutex = manager.get_mutex(d)
+    d = manager.basic_data_pipeline_all(['KinoSat_110301'], ['Moscow'], 50)
+    # mutex = manager.get_mutex(d)
     # p = manager.get_priorites(d)
     a = manager.get_belongings(d)
     b = manager.get_belongings_dict(d)
