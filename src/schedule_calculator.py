@@ -59,7 +59,6 @@ class ScheduleCalculator:
     def calculate(
             self,
             config_data,
-            dl_only,
             num_opportunities,
             cap,
             s_mutex,
@@ -71,6 +70,7 @@ class ScheduleCalculator:
             alpha,
             priorities,
             d=None,
+            dl_only=False,
     ) -> pd.DataFrame:
         if d is None:
             d = np.ones(num_opportunities)
