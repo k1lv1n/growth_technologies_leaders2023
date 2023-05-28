@@ -103,7 +103,8 @@ class InputManager:
 
     @measure_memory_and_time
     def restrict_by_duration(self, df, max_duration):
-        df_list = []
+        new_df_size = sum(df.duration // max_duration) + sum(df.duration % max_duration != 1)
+        df_list = [None] * max_duration
         for _, row in df.iterrows():
             if row['duration'] <= max_duration:
                 df_list.append(row)
@@ -134,7 +135,7 @@ class InputManager:
         return res_df
 
     @measure_memory_and_time
-    def separate_by_others(self, dfs: List[pd.DataFrame]):
+    def separate_by_others(self, dfs: List[pd.DataFrame]) -> pd.DataFrame:
         points = []
         is_begins = []
         origin_dfs = []
@@ -176,25 +177,30 @@ class InputManager:
     def basic_data_pipeline_all(self,
                                 satellites: List[str],
                                 stations: List[str],
-                                max_duration):
+                                modeling_start,
+                                modeling_end,
+                                max_duration) -> pd.DataFrame:
         data = self.load_data_for_calculation(satellites, stations)
         data_after_separation = self.separate_by_others(data)
-        data_after_separation_no_short = data_after_separation[data_after_separation.duration > 1]
+        data_for_time_window = self.partition_data_by_modeling_interval(modeling_start,
+                                                                        modeling_end,
+                                                                        data_after_separation)
+        data_after_separation_no_short = data_for_time_window[data_for_time_window.duration > 1]
         data_with_restrict = self.restrict_by_duration(data_after_separation_no_short, max_duration)  # 20 sec
         return data_with_restrict.reset_index().sort_index()
 
-    def basic_data_pipeline_dl(self,
-                               satellites: List[str],
-                               stations: List[str],
-                               max_duration):
-        data = self.load_data_for_calculation_dl(satellites, stations)
-        data_after_separation = self.separate_by_others(data)
-        data_after_separation_no_short = data_after_separation[data_after_separation.duration > 1]
-        if max_duration:
-            data_with_restrict = self.restrict_by_duration(data_after_separation_no_short, max_duration)  # 20 sec
-            return data_with_restrict.sort_index()
-        else:
-            return data_after_separation_no_short.sort_index()
+    # def basic_data_pipeline_dl(self,
+    #                            satellites: List[str],
+    #                            stations: List[str],
+    #                            max_duration):
+    #     data = self.load_data_for_calculation_dl(satellites, stations)
+    #     data_after_separation = self.separate_by_others(data)
+    #     data_after_separation_no_short = data_after_separation[data_after_separation.duration > 1]
+    #     if max_duration:
+    #         data_with_restrict = self.restrict_by_duration(data_after_separation_no_short, max_duration)  # 20 sec
+    #         return data_with_restrict.sort_index()
+    #     else:
+    #         return data_after_separation_no_short.sort_index()
 
     @measure_memory_and_time
     def partition_data_by_modeling_interval(self, modeling_start, modeling_end, prepared_data):

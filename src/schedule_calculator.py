@@ -70,6 +70,7 @@ class ScheduleCalculator:
             alpha,
             priorities,
             d=None,
+            dl_only=False,
     ) -> pd.DataFrame:
         if d is None:
             d = np.ones(num_opportunities)
