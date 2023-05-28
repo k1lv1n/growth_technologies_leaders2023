@@ -176,7 +176,7 @@ class InputManager:
     def basic_data_pipeline_all(self,
                                 satellites: List[str],
                                 stations: List[str],
-                                max_duration):
+                                max_duration) -> pd.DataFrame:
         data = self.load_data_for_calculation(satellites, stations)
         data_after_separation = self.separate_by_others(data)
         data_after_separation_no_short = data_after_separation[data_after_separation.duration > 1]
