@@ -10,8 +10,8 @@ import pandas as pd
 import os
 import sys
 
-# sys.path.insert(1, os.path.dirname('data'))
-# sys.path.insert(2, os.path.dirname('src'))
+sys.path.insert(1, os.path.dirname('data'))
+sys.path.insert(2, os.path.dirname('src'))
 sys.path.append('../')
 from data.station_groups import russian_stations, foreign_stations
 
