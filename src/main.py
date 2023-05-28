@@ -10,8 +10,9 @@ import pandas as pd
 import os
 import sys
 
-sys.path.insert(1, os.path.dirname('data'))
-sys.path.insert(2, os.path.dirname('src'))
+# sys.path.insert(1, os.path.dirname('data'))
+# sys.path.insert(2, os.path.dirname('src'))
+sys.path.append('../')
 from data.station_groups import russian_stations, foreign_stations
 
 from data.satallites_groups import *
@@ -106,7 +107,7 @@ def calculate_by_data(sputniks, stations, app,
     res_df = pd.concat(res_dfs)
 
     res_df_prep = prep(res_df)
-    res_df_prep.to_csv('res_df_prep.csv')
+    # res_df_prep.to_csv('res_df_prep.csv')
 
     print(working_ratio_dl(res_df_prep))
     print(res_df_prep)
@@ -153,9 +154,9 @@ class Application(Frame):
         right_frame = LabelFrame(text="Результат")
         right_frame.pack(side=RIGHT, padx=5, pady=5, fill=BOTH)
 
-        b1 = Button(left_frame, text='Выбор файла',
-                    bg='grey', command=lambda: self.upload_file())
-        b1.pack(side=TOP, padx=3, pady=3, fill=X)
+        # b1 = Button(left_frame, text='Выбор файла',
+        #             bg='grey', command=lambda: self.upload_file())
+        # b1.pack(side=TOP, padx=3, pady=3, fill=X)
 
         b2 = Button(left_frame, text='Выбор набора спутников',
                     bg='grey', command=lambda: self.ask_multiple_choice_sputniks(sat_group_10))
@@ -183,7 +184,7 @@ class Application(Frame):
         # self.pb = ttk.Progressbar(left_frame, orient="horizontal", value=0)
         # self.pb.pack(side=TOP, padx=3, pady=3, fill=X)
         
-        l_w1 = Label(left_frame, text='Шаг рассчета в часах')
+        l_w1 = Label(left_frame, text='Шаг расчета в часах')
         l_w1.pack(side=TOP, padx=3, pady=3, fill=BOTH)
         self.w1 = Scale(left_frame, from_=1, to=24, orient='horizontal')
         self.w1.set(5)
