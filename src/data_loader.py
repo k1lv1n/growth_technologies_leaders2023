@@ -45,6 +45,7 @@ class DataLoader:
                 data = f.read()
         except FileNotFoundError:
             logger.error(f'No information about {station_name}')
+            print(f'{station_name}-To-{sat_name}')
         pure_data_starter = data.find(f'{station_name}-To-{sat_name}\n')
         res = sat_block_to_df(data[pure_data_starter:], datetime_in_ms)
 
