@@ -24,22 +24,22 @@ if __name__ == '__main__':
 
     dl_only = False
     sat_group = [
-        *sat_group_all
+        *sat_group_all[0:1]
         # * sat_group_3,
         # * sat_group_3,
     ]
-    stations = russian_stations
+    stations = russian_stations[0:1]
     partition_restrict = 500
     modeling_start_datetime = datetime.datetime(2027, 6, 1, 0)
     modeling_end_datetime = datetime.datetime(2027, 6, 1, 12)
     out_name = f'{len(sat_group)}_sats_{len(stations)}_stats_{modeling_start_datetime.date()}_start_{modeling_end_datetime.date()}_end'
     print(modeling_end_datetime - modeling_start_datetime)
     # modeling_interval_in_hours = 24
-
-    if dl_only:
-        d = manager.basic_data_pipeline_dl(sat_group, stations, partition_restrict)
-    else:
-        d = manager.basic_data_pipeline_all(sat_group, stations, partition_restrict)
+    d = manager.basic_data_pipeline_all(sat_group, stations,
+                                        modeling_start_datetime,
+                                        modeling_end_datetime,
+                                        partition_restrict,
+                                        )
 
     d_part = manager.partition_data_by_modeling_interval(modeling_start_datetime, modeling_end_datetime, d)
 
