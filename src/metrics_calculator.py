@@ -25,7 +25,7 @@ def working_ratio_img(res):
 
 def working_ratio(res):
     # Доля работы при наличии возможности
-    res['real_duration'].sum() / res['duration'].sum()
+    return res['real_duration'].sum() / res['duration'].sum()
 
 
 def ostatok(res):
@@ -41,3 +41,10 @@ def total_imged(res):
 def total_dl(res):
     # Общее кол-во сброшенных данных
     return res[res['action_type'] == -1]['transfered_data'].sum() * -1
+
+
+
+if __name__ == '__main__':
+    df = pd.read_csv(r"C:\Users\bushas\Projects\growth_technologies_leaders2023\res_df_prep.csv")
+    a = df['real_duration'].sum()
+    print(df['duration'].sum())
