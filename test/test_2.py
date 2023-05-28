@@ -3,7 +3,7 @@ import pandas as pd
 import os
 import pprint
 
-out_filename = r'C:\Users\Kirill\PycharmProjects\growth_technologies_leaders2023\examples\KinoSat_110101__russian_stations__500__24H.csv'
+out_filename = r'/root/growth_technologies_leaders2023/calcs/sat_group_6_russians/full_plan_1812229200_1812315600.csv'
 
 
 class TestInfoConservation:

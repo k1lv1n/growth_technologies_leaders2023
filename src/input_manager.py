@@ -199,7 +199,6 @@ class InputManager:
     @measure_memory_and_time
     def partition_data_by_modeling_interval(self, modeling_start, modeling_end, prepared_data):
         ts, te = modeling_start.timestamp(), modeling_end.timestamp()
-
         return prepared_data[(prepared_data.start_datetime >= ts) & (prepared_data.end_datetime <= te)]
 
     def basic_data_pipeline_imging(self,
