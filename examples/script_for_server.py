@@ -17,13 +17,13 @@ def full_calculation_by_step(step):
     calculator = ScheduleCalculator()
 
     june_first = datetime.datetime(2027, 6, 1, 3, 0)
-    june_first_fifteenth = datetime.datetime(2027, 6, 15, 0, 0)
+    june_first_fifteenth = datetime.datetime(2027, 6, 1, 15, 0)
     time_step = datetime.timedelta(hours=step)
 
     num_interations = (june_first_fifteenth - june_first) // time_step
 
-    sat_group = [*sat_group_all]
-    stations = [*all_stations]
+    sat_group = [*sat_group_all[0:10]]
+    stations = [*all_stations[0:10]]
     partition_restrict = 2000
     print(num_interations)
     # d.to_csv('restricted_all_sats_all_stations.csv')

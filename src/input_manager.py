@@ -104,10 +104,12 @@ class InputManager:
     @measure_memory_and_time
     def restrict_by_duration(self, df, max_duration):
         new_df_size = sum(df.duration // max_duration) + sum(df.duration % max_duration != 1)
-        df_list = [None] * max_duration
+        df_list = [None] * int(new_df_size)
+        k = 0
         for _, row in df.iterrows():
             if row['duration'] <= max_duration:
-                df_list.append(row)
+                df_list[k] = row
+                k += 1
             else:
                 n_splits = ceil(row['duration'] / max_duration)
                 for i in range(n_splits):
@@ -115,9 +117,9 @@ class InputManager:
                     new_row['start_datetime'] = row['start_datetime'] + i * max_duration
                     new_row['duration'] = min(max_duration, row['duration'] - i * max_duration)
                     new_row['end_datetime'] = new_row['start_datetime'] + new_row['duration']
-                    df_list.append(new_row)
+                    df_list[k] = new_row
+                    k += 1
         res_df = pd.DataFrame(df_list)
-
         return res_df
 
     @measure_memory_and_time
